@@ -101,7 +101,7 @@ class MemberManagerIntegrationTest extends IntegrationTestSupport {
         var memberPreference = memberManager.registerPreference(member, newPreference);
         entityManager.flush();
 
-        var oldMemberPreference = memberReader.getMemberPreference(member.getId());
+        var oldMemberPreference = memberReader.getMemberPreference(memberPreference.getId(), member.getId());
 
         assertThat(oldMemberPreference).isNotNull().extracting(
                 MemberPreference::getCategoryTopic,
@@ -114,13 +114,18 @@ class MemberManagerIntegrationTest extends IntegrationTestSupport {
         var springCategory = categoryTopicJpaRepository.findByName("Spring")
                 .orElseThrow(() -> new RuntimeException("Spring 토픽이 존재하지 않습니다"));
 
-        var updatePreference = new UpdatePreference(springCategory.getId(), ProblemDifficulty.HARD);
+        var updatePreference = new UpdatePreference(memberPreference.getId(), springCategory.getId(), ProblemDifficulty.HARD);
 
         // when
         memberManager.updatePreference(memberPreference, updatePreference);
 
         // then
-        var newMemberPreference = memberReader.getMemberPreference(member.getId());
+        entityManager.flush();
+        entityManager.clear();
+        var newMemberPreference = memberReader.getMemberPreferences(member.getId()).stream()
+                .filter(preference -> preference.getEffectiveAt().equals(LocalDate.now().plusDays(1)))
+                .findFirst()
+                .orElseThrow();
         assertThat(newMemberPreference).isNotNull()
                 .extracting(
                         MemberPreference::getCategoryTopic,
@@ -148,24 +153,31 @@ class MemberManagerIntegrationTest extends IntegrationTestSupport {
         // 첫번쨰 업데이트
         var springCategory = categoryTopicJpaRepository.findByName("Spring")
                 .orElseThrow(() -> new RuntimeException("Spring 토픽이 존재하지 않습니다"));
-        var updatePreference = new UpdatePreference(springCategory.getId(), ProblemDifficulty.HARD);
+        var updatePreference = new UpdatePreference(memberPreference.getId(), springCategory.getId(), ProblemDifficulty.HARD);
         memberManager.updatePreference(memberPreference, updatePreference);
 
         // 같은 날짜에 두번째 업데이트 준비
-        var newMemberPreference = memberReader.getMemberPreference(member.getId());
+        entityManager.flush();
+        entityManager.clear();
+        var newMemberPreference = memberReader.getMemberPreferences(member.getId()).stream()
+                .filter(preference -> preference.getEffectiveAt().equals(LocalDate.now().plusDays(1)))
+                .findFirst()
+                .orElseThrow();
         var mysqlCategory = categoryTopicJpaRepository.findByName("MySQL")
                 .orElseThrow(() -> new RuntimeException("MySQL 토픽이 존재하지 않습니다"));
-        var updateSecPreference = new UpdatePreference(mysqlCategory.getId(), ProblemDifficulty.EASY);
+        var updateSecPreference = new UpdatePreference(newMemberPreference.getId(), mysqlCategory.getId(), ProblemDifficulty.EASY);
 
         // when
         memberManager.updatePreference(newMemberPreference, updateSecPreference);
 
         // then
-        var sameIdPreference = memberReader.getMemberPreference(member.getId());
+        entityManager.flush();
+        entityManager.clear();
+        var sameIdPreference = memberReader.getMemberPreference(newMemberPreference.getId(), member.getId());
 
         // 동일한 엔티티가 업데이트 되었는지 확인
         assertThat(sameIdPreference.getId()).isEqualTo(newMemberPreference.getId());
-        assertThat(newMemberPreference).isNotNull()
+        assertThat(sameIdPreference).isNotNull()
                 .extracting(
                         MemberPreference::getCategoryTopic,
                         MemberPreference::getDifficulty,

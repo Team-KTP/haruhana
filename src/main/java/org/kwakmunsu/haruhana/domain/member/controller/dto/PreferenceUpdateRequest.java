@@ -16,8 +16,12 @@ public record PreferenceUpdateRequest(
         ProblemDifficulty difficulty
 ) {
 
-    public UpdatePreference toUpdatePreference() {
-        return new UpdatePreference(categoryTopicId, difficulty);
+    public UpdatePreference toUpdatePreference(Long preferenceId) {
+        return UpdatePreference.builder()
+                .preferenceId(preferenceId)
+                .categoryTopicId(categoryTopicId)
+                .difficulty(difficulty)
+                .build();
     }
 
 }

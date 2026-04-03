@@ -118,18 +118,18 @@ public class MemberService {
     * */
     @Transactional
     public void updatePreference(UpdatePreference updatePreference, Long memberId) {
-        MemberPreference memberPreference = memberReader.getMemberPreference(memberId);
+        MemberPreference memberPreference = memberReader.getMemberPreference(updatePreference.preferenceId(), memberId);
 
         // 기존 선호 학습 정보와 동일한 경우 업데이트하지 않음
         if (memberPreference.isEqualsPreference(updatePreference.categoryTopicId(), updatePreference.difficulty())) {
-            log.debug("[MemberService] 선호도 변경 없음 - memberId: {}", memberId);
+            log.debug("[MemberService] 선호도 변경 없음 - memberId: {}, preferenceId: {}", memberId, updatePreference.preferenceId());
             return;
         }
 
         memberManager.updatePreference(memberPreference, updatePreference);
 
-        log.info("[MemberService] 학습 선호도 업데이트 완료 - memberId: {}, categoryTopicId: {}, difficulty: {}",
-                memberId, updatePreference.categoryTopicId(), updatePreference.difficulty());
+        log.info("[MemberService] 학습 선호도 업데이트 완료 - memberId: {}, preferenceId: {} categoryTopicId: {}, difficulty: {}",
+                memberId, updatePreference.preferenceId(), updatePreference.categoryTopicId(), updatePreference.difficulty());
     }
 
     /**
