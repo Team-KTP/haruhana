@@ -61,7 +61,7 @@ public class MemberPreference extends BaseEntity {
         return (this.categoryTopic.getId().equals(categoryTopicId) && this.difficulty == difficulty);
     }
 
-    public boolean isEffectiveToday() {
+    public boolean isScheduledForTomorrow() {
         return this.effectiveAt.isEqual(LocalDate.now().plusDays(1));
     }
 

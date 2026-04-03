@@ -15,12 +15,17 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import org.kwakmunsu.haruhana.domain.member.controller.dto.DeviceTokenSyncRequest;
 import org.kwakmunsu.haruhana.domain.member.controller.dto.MemberCreateRequest;
+import org.kwakmunsu.haruhana.domain.member.controller.dto.PreferenceAppendRequest;
 import org.kwakmunsu.haruhana.domain.member.controller.dto.PreferenceUpdateRequest;
 import org.kwakmunsu.haruhana.domain.member.controller.dto.ProfileUpdateRequest;
 import org.kwakmunsu.haruhana.domain.member.service.MemberProfileResponse;
+import org.kwakmunsu.haruhana.global.annotation.LoginMember;
 import org.kwakmunsu.haruhana.global.support.response.ApiResponse;
 import org.kwakmunsu.haruhana.global.swagger.ApiExceptions;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 @Tag(name = "Member Docs", description = "Member 관련 API 문서")
 public abstract class MemberDocsController {
@@ -59,6 +64,21 @@ public abstract class MemberDocsController {
     public abstract ResponseEntity<ApiResponse<?>> updatePreference(
             @Valid PreferenceUpdateRequest request,
             Long memberId
+    );
+
+    @Operation(
+            summary = "회원 학습 정보 추가 - JWT [O]",
+            description = """
+                    ### 회원의 학습 정보를 추가합니다.
+                    - 카테고리 주제 ID와 난이도를 포함한 요청을 받습니다.
+                    - 성공 시 빈 응답을 반환합니다.
+                    - 추가된 학습 정보는 당일부터 적용되고 문제는 바로 출제됩니다.
+                    - 최대 5개의 학습 정보까지 추가할 수 있습니다.
+                    """
+    )
+    public abstract ResponseEntity<ApiResponse<?>> appendPreference(
+            @RequestBody @Valid PreferenceAppendRequest request,
+            @LoginMember Long memberId
     );
 
     @Operation(

@@ -15,8 +15,10 @@ import org.kwakmunsu.haruhana.domain.category.entity.CategoryTopic;
 import org.kwakmunsu.haruhana.domain.member.MemberFixture;
 import org.kwakmunsu.haruhana.domain.member.entity.MemberPreference;
 import org.kwakmunsu.haruhana.domain.member.enums.Role;
+import org.kwakmunsu.haruhana.domain.member.service.dto.request.NewPreference;
 import org.kwakmunsu.haruhana.domain.member.service.dto.request.UpdatePreference;
 import org.kwakmunsu.haruhana.domain.problem.enums.ProblemDifficulty;
+import org.kwakmunsu.haruhana.domain.problem.service.ProblemGenerator;
 import org.kwakmunsu.haruhana.global.support.image.StorageProvider;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -30,7 +32,13 @@ class MemberServiceUnitTest extends UnitTestSupport {
     MemberManager memberManager;
 
     @Mock
+    MemberValidator memberValidator;
+
+    @Mock
     MemberRemover memberRemover;
+
+    @Mock
+    ProblemGenerator problemGenerator;
 
     @Mock
     StorageProvider storageProvider;
@@ -138,6 +146,27 @@ class MemberServiceUnitTest extends UnitTestSupport {
 
         // then
         assertThat(idAvailable).isFalse();
+    }
+
+    @Test
+    void 회원_학습_선호_정보를_추가한다() {
+        // given
+        var member = MemberFixture.createMember(Role.ROLE_MEMBER);
+        var categoryTopic = CategoryTopic.create(1L, "Java");
+        var memberPreference = MemberPreference.create(member, categoryTopic, ProblemDifficulty.MEDIUM, LocalDate.now());
+        var newPreference = new NewPreference(1L, ProblemDifficulty.MEDIUM);
+
+        given(memberReader.findWithLock(member.getId())).willReturn(member);
+        given(memberManager.registerPreference(member, newPreference)).willReturn(memberPreference);
+
+        // when
+        memberService.appendPreference(newPreference, member.getId());
+
+        // then
+        verify(memberReader, times(1)).findWithLock(member.getId());
+        verify(memberValidator, times(1)).validateAppendPreference(newPreference, member.getId());
+        verify(memberManager, times(1)).registerPreference(member, newPreference);
+        verify(problemGenerator, times(1)).generateInitialProblem(any(), any(), any());
     }
 
 }

@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.kwakmunsu.haruhana.domain.member.entity.MemberPreference;
+import org.kwakmunsu.haruhana.domain.problem.enums.ProblemDifficulty;
 import org.kwakmunsu.haruhana.global.entity.EntityStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -25,4 +26,7 @@ public interface MemberPreferenceJpaRepository extends JpaRepository<MemberPrefe
     @Query("UPDATE MemberPreference mp SET mp.status = :status, mp.updatedAt = :now WHERE mp.member.id = :memberId AND mp.status = 'ACTIVE'")
     void softDeleteByMemberId(@Param("memberId") Long memberId, @Param("status") EntityStatus status, @Param("now") LocalDateTime now);
 
+    int countByMemberIdAndStatus(Long memberId, EntityStatus status);
+
+    boolean existsByMemberIdAndCategoryTopicIdAndDifficultyAndStatus(Long memberId, Long aLong, ProblemDifficulty difficulty, EntityStatus entityStatus);
 }

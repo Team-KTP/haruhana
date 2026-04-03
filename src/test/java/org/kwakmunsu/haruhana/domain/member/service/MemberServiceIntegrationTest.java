@@ -1,6 +1,7 @@
 package org.kwakmunsu.haruhana.domain.member.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doNothing;
@@ -22,6 +23,8 @@ import org.kwakmunsu.haruhana.domain.member.repository.MemberJpaRepository;
 import org.kwakmunsu.haruhana.domain.member.repository.MemberPreferenceJpaRepository;
 import org.kwakmunsu.haruhana.domain.member.service.dto.request.NewPreference;
 import org.kwakmunsu.haruhana.domain.member.service.dto.request.UpdateProfile;
+import org.kwakmunsu.haruhana.global.support.error.ErrorType;
+import org.kwakmunsu.haruhana.global.support.error.HaruHanaException;
 import org.kwakmunsu.haruhana.domain.problem.enums.ProblemDifficulty;
 import org.kwakmunsu.haruhana.domain.problem.service.ProblemGenerator;
 import org.kwakmunsu.haruhana.domain.storage.enums.UploadType;
@@ -223,6 +226,70 @@ class MemberServiceIntegrationTest extends IntegrationTestSupport {
         ).orElseThrow();
 
         assertThat(storage.isComplete()).isTrue();
+    }
+
+    @Test
+    void 학습_선호_정보를_추가한다() {
+        // given
+        var newProfile = MemberFixture.createNewProfile();
+        var newPreference = new NewPreference(categoryTopic.getId(), ProblemDifficulty.EASY);
+        Long memberId = memberService.createMember(newProfile, newPreference);
+
+        var springTopic = categoryTopicJpaRepository.findByName("Spring")
+                .orElseThrow(() -> new RuntimeException("Spring 토픽이 존재하지 않습니다"));
+        var appendPreference = new NewPreference(springTopic.getId(), ProblemDifficulty.MEDIUM);
+
+        // when
+        memberService.appendPreference(appendPreference, memberId);
+
+        // then
+        var count = memberPreferenceJpaRepository.countByMemberIdAndStatus(memberId, org.kwakmunsu.haruhana.global.entity.EntityStatus.ACTIVE);
+        assertThat(count).isEqualTo(2);
+    }
+
+    @Test
+    void 최대_개수_초과_시_예외가_발생한다() {
+        // given
+        var newProfile = MemberFixture.createNewProfile();
+        var newPreference = new NewPreference(categoryTopic.getId(), ProblemDifficulty.EASY);
+        Long memberId = memberService.createMember(newProfile, newPreference);
+
+        var springTopic = categoryTopicJpaRepository.findByName("Spring")
+                .orElseThrow(() -> new RuntimeException("Spring 토픽이 존재하지 않습니다"));
+        var mysqlTopic = categoryTopicJpaRepository.findByName("MySQL")
+                .orElseThrow(() -> new RuntimeException("MySQL 토픽이 존재하지 않습니다"));
+        var pythonTopic = categoryTopicJpaRepository.findByName("Python")
+                .orElseThrow(() -> new RuntimeException("Python 토픽이 존재하지 않습니다"));
+        var goTopic = categoryTopicJpaRepository.findByName("Go")
+                .orElseThrow(() -> new RuntimeException("Go 토픽이 존재하지 않습니다"));
+        var kotlinTopic = categoryTopicJpaRepository.findByName("Kotlin")
+                .orElseThrow(() -> new RuntimeException("Kotlin 토픽이 존재하지 않습니다"));
+
+        memberService.appendPreference(new NewPreference(springTopic.getId(), ProblemDifficulty.MEDIUM), memberId);
+        memberService.appendPreference(new NewPreference(mysqlTopic.getId(), ProblemDifficulty.MEDIUM), memberId);
+        memberService.appendPreference(new NewPreference(pythonTopic.getId(), ProblemDifficulty.MEDIUM), memberId);
+        memberService.appendPreference(new NewPreference(goTopic.getId(), ProblemDifficulty.MEDIUM), memberId);
+
+        // when & then
+        var sixthPreference = new NewPreference(kotlinTopic.getId(), ProblemDifficulty.MEDIUM);
+        assertThatThrownBy(() -> memberService.appendPreference(sixthPreference, memberId))
+                .isInstanceOf(HaruHanaException.class)
+                .hasMessage(ErrorType.EXCEED_MAX_PREFERENCE_COUNT.getMessage());
+    }
+
+    @Test
+    void 중복_선호_정보_추가_시_예외가_발생한다() {
+        // given
+        var newProfile = MemberFixture.createNewProfile();
+        var newPreference = new NewPreference(categoryTopic.getId(), ProblemDifficulty.EASY);
+        Long memberId = memberService.createMember(newProfile, newPreference);
+
+        var duplicatePreference = new NewPreference(categoryTopic.getId(), ProblemDifficulty.EASY);
+
+        // when & then
+        assertThatThrownBy(() -> memberService.appendPreference(duplicatePreference, memberId))
+                .isInstanceOf(HaruHanaException.class)
+                .hasMessage(ErrorType.DUPLICATE_PREFERENCE.getMessage());
     }
 
     @Test

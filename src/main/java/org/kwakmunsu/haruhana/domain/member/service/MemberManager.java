@@ -13,6 +13,9 @@ import org.kwakmunsu.haruhana.domain.member.repository.MemberPreferenceJpaReposi
 import org.kwakmunsu.haruhana.domain.member.service.dto.request.NewPreference;
 import org.kwakmunsu.haruhana.domain.member.service.dto.request.NewProfile;
 import org.kwakmunsu.haruhana.domain.member.service.dto.request.UpdatePreference;
+import org.kwakmunsu.haruhana.global.entity.EntityStatus;
+import org.kwakmunsu.haruhana.global.support.error.ErrorType;
+import org.kwakmunsu.haruhana.global.support.error.HaruHanaException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,6 +42,7 @@ public class MemberManager {
         return member;
     }
 
+    @Transactional
     public MemberPreference registerPreference(Member member, NewPreference newPreference) {
         CategoryTopic categoryTopic = categoryReader.findCategoryTopic(newPreference.categoryTopicId());
 
@@ -58,11 +62,11 @@ public class MemberManager {
         Member member = memberPreference.getMember();
         CategoryTopic categoryTopic = categoryReader.findCategoryTopic(updatePreference.categoryTopicId());
 
-        // 같은 날짜에 회원 설정 변경 시 기존 설정을 업데이트하는 방식으로 처리
-        if (memberPreference.isEffectiveToday()) {
+        // 이미 내일 날짜로 예약된 설정이 있으면 인플레이스 수정, 아니면 소프트 삭제 후 내일 날짜로 재생성
+        if (memberPreference.isScheduledForTomorrow()) {
             memberPreference.updatePreference(categoryTopic, updatePreference.difficulty());
         } else {
-            // 다음 날부터 적용되는 설정 변경 시 기존 설정을 삭제하고 새로운 설정을 생성하는 방식으로 처리
+            // 오늘 기준 설정 변경 시 기존 설정을 삭제하고 내일부터 적용되는 새로운 설정을 생성
             preferenceUpdateForTomorrow(memberPreference, member, categoryTopic, updatePreference);
         }
 
@@ -77,6 +81,7 @@ public class MemberManager {
     public void clearMember(Member member) {
         member.clearRefreshToken();
     }
+
 
     private void preferenceUpdateForTomorrow(
             MemberPreference memberPreference,
@@ -94,5 +99,4 @@ public class MemberManager {
                 LocalDate.now().plusDays(1)
         ));
     }
-
 }

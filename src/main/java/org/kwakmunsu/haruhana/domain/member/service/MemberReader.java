@@ -38,6 +38,11 @@ public class MemberReader {
                 .orElseThrow(() -> new HaruHanaException(ErrorType.NOT_FOUND_MEMBER));
     }
 
+    public Member findWithLock(Long id) {
+        return memberJpaRepository.findByIdAndStatusWithLock(id, EntityStatus.ACTIVE)
+                .orElseThrow(() -> new HaruHanaException(ErrorType.NOT_FOUND_MEMBER));
+    }
+
     public long countAll() {
         return memberJpaRepository.countAllByStatus(EntityStatus.ACTIVE);
     }
@@ -76,4 +81,5 @@ public class MemberReader {
     public boolean existsByLoginId(String loginId) {
         return memberJpaRepository.existsByLoginIdAndStatus(loginId, EntityStatus.ACTIVE);
     }
+
 }

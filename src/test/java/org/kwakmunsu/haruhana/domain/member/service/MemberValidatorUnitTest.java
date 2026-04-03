@@ -12,6 +12,8 @@ import org.junit.jupiter.api.Test;
 import org.kwakmunsu.haruhana.UnitTestSupport;
 import org.kwakmunsu.haruhana.domain.member.MemberFixture;
 import org.kwakmunsu.haruhana.domain.member.repository.MemberJpaRepository;
+import org.kwakmunsu.haruhana.domain.member.repository.MemberPreferenceJpaRepository;
+import org.kwakmunsu.haruhana.global.entity.EntityStatus;
 import org.kwakmunsu.haruhana.global.support.error.ErrorType;
 import org.kwakmunsu.haruhana.global.support.error.HaruHanaException;
 import org.mockito.InjectMocks;
@@ -21,6 +23,9 @@ class MemberValidatorUnitTest extends UnitTestSupport {
 
     @Mock
     MemberJpaRepository memberJpaRepository;
+
+    @Mock
+    MemberPreferenceJpaRepository memberPreferenceJpaRepository;
 
     @Mock
     NicknameFilter nicknameFilter;
@@ -116,6 +121,45 @@ class MemberValidatorUnitTest extends UnitTestSupport {
 
         // then
         assertThat(nicknameAvailable).isFalse();
+    }
+
+    @Test
+    void 선호_정보_추가_검증이_정상적으로_통과한다() {
+        // given
+        given(memberPreferenceJpaRepository.countByMemberIdAndStatus(any(), any())).willReturn(3);
+        given(memberPreferenceJpaRepository.existsByMemberIdAndCategoryTopicIdAndDifficultyAndStatus(any(), any(), any(), any())).willReturn(false);
+
+        var newPreference = MemberFixture.createNewPreference(1L);
+
+        // when & then
+        memberValidator.validateAppendPreference(newPreference, 1L);
+    }
+
+    @Test
+    void 선호_정보_최대_개수_초과_시_예외가_발생한다() {
+        // given
+        given(memberPreferenceJpaRepository.countByMemberIdAndStatus(any(), any())).willReturn(5);
+
+        var newPreference = MemberFixture.createNewPreference(1L);
+
+        // when & then
+        assertThatThrownBy(() -> memberValidator.validateAppendPreference(newPreference, 1L))
+                .isInstanceOf(HaruHanaException.class)
+                .hasMessage(ErrorType.EXCEED_MAX_PREFERENCE_COUNT.getMessage());
+    }
+
+    @Test
+    void 이미_등록된_선호_정보_추가_시_예외가_발생한다() {
+        // given
+        given(memberPreferenceJpaRepository.countByMemberIdAndStatus(any(), any())).willReturn(3);
+        given(memberPreferenceJpaRepository.existsByMemberIdAndCategoryTopicIdAndDifficultyAndStatus(any(), any(), any(), any())).willReturn(true);
+
+        var newPreference = MemberFixture.createNewPreference(1L);
+
+        // when & then
+        assertThatThrownBy(() -> memberValidator.validateAppendPreference(newPreference, 1L))
+                .isInstanceOf(HaruHanaException.class)
+                .hasMessage(ErrorType.DUPLICATE_PREFERENCE.getMessage());
     }
 
 }
