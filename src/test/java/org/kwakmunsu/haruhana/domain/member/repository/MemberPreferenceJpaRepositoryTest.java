@@ -1,6 +1,7 @@
 package org.kwakmunsu.haruhana.domain.member.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.groups.Tuple.tuple;
 
 import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Transactional
 @RequiredArgsConstructor
-class MemberPreferenceJpaRepositoryTest extends IntegrationTestSupport{
+class MemberPreferenceJpaRepositoryTest extends IntegrationTestSupport {
 
     final MemberPreferenceJpaRepository memberPreferenceJpaRepository;
     final MemberJpaRepository memberJpaRepository;
@@ -43,7 +44,8 @@ class MemberPreferenceJpaRepositoryTest extends IntegrationTestSupport{
         memberPreferenceJpaRepository.save(memberPreference);
 
         // when
-        var foundMemberPreferences = memberPreferenceJpaRepository.findAllByMemberIdWithMember(member.getId(), EntityStatus.ACTIVE);
+        var foundMemberPreferences = memberPreferenceJpaRepository.findAllByMemberIdWithMember(member.getId(),
+                EntityStatus.ACTIVE);
 
         // then
         assertThat(foundMemberPreferences).hasSize(1)
@@ -59,16 +61,25 @@ class MemberPreferenceJpaRepositoryTest extends IntegrationTestSupport{
         var springCategory = categoryTopicJpaRepository.findByName("Spring")
                 .orElseThrow(() -> new RuntimeException("Spring 토픽이 존재하지 않습니다"));
 
-        memberPreferenceJpaRepository.save(MemberPreference.create(member, javaCategory, ProblemDifficulty.MEDIUM, LocalDate.now()));
-        memberPreferenceJpaRepository.save(MemberPreference.create(member, springCategory, ProblemDifficulty.HARD, LocalDate.now()));
+        memberPreferenceJpaRepository.save(
+                MemberPreference.create(member, javaCategory, ProblemDifficulty.MEDIUM, LocalDate.now()));
+        memberPreferenceJpaRepository.save(
+                MemberPreference.create(member, springCategory, ProblemDifficulty.HARD, LocalDate.now()));
 
         // when
-        var foundMemberPreferences = memberPreferenceJpaRepository.findAllByMemberIdWithMember(member.getId(), EntityStatus.ACTIVE);
+        var foundMemberPreferences = memberPreferenceJpaRepository.findAllByMemberIdWithMember(member.getId(),
+                EntityStatus.ACTIVE);
 
         // then
         assertThat(foundMemberPreferences).hasSize(2)
-                .extracting(MemberPreference::getMember)
-                .containsOnly(member);
+                .extracting(mp -> tuple(
+                        mp.getCategoryTopic().getName(),
+                        mp.getDifficulty()
+                ))
+                .containsExactlyInAnyOrder(
+                        tuple("Java", ProblemDifficulty.MEDIUM),
+                        tuple("Spring", ProblemDifficulty.HARD)
+                );
     }
 
 }
