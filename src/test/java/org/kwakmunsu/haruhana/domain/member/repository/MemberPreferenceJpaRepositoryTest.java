@@ -36,18 +36,39 @@ class MemberPreferenceJpaRepositoryTest extends IntegrationTestSupport{
     }
 
     @Test
-    void findByMemberIdWithMember_JOIN_FETCH_확인() {
+    void findAllByMemberIdWithMember_JOIN_FETCH_확인() {
         // given
-        var member = memberJpaRepository.save( MemberFixture.createMemberWithOutId(Role.ROLE_MEMBER));
+        var member = memberJpaRepository.save(MemberFixture.createMemberWithOutId(Role.ROLE_MEMBER));
         var memberPreference = MemberPreference.create(member, categoryTopic, ProblemDifficulty.MEDIUM, LocalDate.now());
         memberPreferenceJpaRepository.save(memberPreference);
 
         // when
-        var foundMemberPreference = memberPreferenceJpaRepository.findByMemberIdWithMember(member.getId(), EntityStatus.ACTIVE)
-                .orElseThrow();
+        var foundMemberPreferences = memberPreferenceJpaRepository.findAllByMemberIdWithMember(member.getId(), EntityStatus.ACTIVE);
 
         // then
-        assertThat(foundMemberPreference.getMember()).isEqualTo(member);
+        assertThat(foundMemberPreferences).hasSize(1)
+                .extracting(MemberPreference::getMember)
+                .containsExactly(member);
+    }
+
+    @Test
+    void findAllByMemberIdWithMember_다중_선호_학습_정보를_모두_반환한다() {
+        // given
+        var member = memberJpaRepository.save(MemberFixture.createMemberWithOutId(Role.ROLE_MEMBER));
+        var javaCategory = categoryTopic;
+        var springCategory = categoryTopicJpaRepository.findByName("Spring")
+                .orElseThrow(() -> new RuntimeException("Spring 토픽이 존재하지 않습니다"));
+
+        memberPreferenceJpaRepository.save(MemberPreference.create(member, javaCategory, ProblemDifficulty.MEDIUM, LocalDate.now()));
+        memberPreferenceJpaRepository.save(MemberPreference.create(member, springCategory, ProblemDifficulty.HARD, LocalDate.now()));
+
+        // when
+        var foundMemberPreferences = memberPreferenceJpaRepository.findAllByMemberIdWithMember(member.getId(), EntityStatus.ACTIVE);
+
+        // then
+        assertThat(foundMemberPreferences).hasSize(2)
+                .extracting(MemberPreference::getMember)
+                .containsOnly(member);
     }
 
 }

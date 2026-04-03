@@ -1,6 +1,7 @@
 package org.kwakmunsu.haruhana.domain.member.service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.kwakmunsu.haruhana.domain.member.entity.Member;
@@ -59,14 +60,15 @@ public class MemberService {
 
     public MemberProfileResponse getProfile(Long memberId) {
         // memberPreference를 통해 회원 정보와 선호 학습 정보를 함께 조회
-        MemberPreference memberPreference = memberReader.getMemberPreference(memberId);
+        List<MemberPreference> memberPreferences = memberReader.getMemberPreferences(memberId);
 
-        String profileImageObjectKey = memberPreference.getMember().getProfileImageObjectKey();
+        Member member = memberPreferences.getFirst().getMember();
+        String profileImageObjectKey = member.getProfileImageObjectKey();
         String presignedReadUrl = profileImageObjectKey != null
                 ? storageProvider.generatePresignedReadUrl(profileImageObjectKey)
                 : null;
 
-        return MemberProfileResponse.from(memberPreference, presignedReadUrl);
+        return MemberProfileResponse.of(member, memberPreferences,  presignedReadUrl);
     }
 
     /**
