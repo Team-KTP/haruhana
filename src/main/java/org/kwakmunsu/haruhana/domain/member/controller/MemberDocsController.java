@@ -7,6 +7,7 @@ import static org.kwakmunsu.haruhana.global.support.error.ErrorType.DUPLICATE_NI
 import static org.kwakmunsu.haruhana.global.support.error.ErrorType.NOT_FOUND_CATEGORY;
 import static org.kwakmunsu.haruhana.global.support.error.ErrorType.NOT_FOUND_FCM_TOKEN;
 import static org.kwakmunsu.haruhana.global.support.error.ErrorType.NOT_FOUND_MEMBER;
+import static org.kwakmunsu.haruhana.global.support.error.ErrorType.NOT_FOUND_MEMBER_PREFERENCE;
 import static org.kwakmunsu.haruhana.global.support.error.ErrorType.UNAUTHORIZED_ERROR;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -76,6 +77,12 @@ public abstract class MemberDocsController {
                     - 최대 5개의 학습 정보까지 추가할 수 있습니다.
                     """
     )
+    @ApiExceptions(values = {
+            BAD_REQUEST,
+            NOT_FOUND_MEMBER,
+            NOT_FOUND_MEMBER_PREFERENCE,
+            DEFAULT_ERROR
+    })
     public abstract ResponseEntity<ApiResponse<?>> appendPreference(
             @RequestBody @Valid PreferenceAppendRequest request,
             @LoginMember Long memberId
