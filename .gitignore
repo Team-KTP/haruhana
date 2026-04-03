@@ -210,6 +210,7 @@ bad-words.txt
 k6-tests/
 nginx/
 
+docs/트러블슈팅/
 # 모니터링 설정 파일은 포함하되 데이터는 제외
 !monitoring/prometheus/prometheus.yml
 !monitoring/grafana/provisioning/**/*.yml
