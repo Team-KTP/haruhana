@@ -88,7 +88,7 @@ class MemberControllerTest extends ControllerTestSupport {
         String requestJson = objectMapper.writeValueAsString(request);
 
         // when & then
-        assertThat(mvcTester.patch().uri("/v1/members/preferences")
+        assertThat(mvcTester.patch().uri("/v1/members/preferences/{preferenceId}", 1L)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestJson))
                 .apply(print())

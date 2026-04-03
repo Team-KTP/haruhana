@@ -24,6 +24,7 @@ import org.kwakmunsu.haruhana.global.annotation.LoginMember;
 import org.kwakmunsu.haruhana.global.support.response.ApiResponse;
 import org.kwakmunsu.haruhana.global.swagger.ApiExceptions;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
 @Tag(name = "Member Docs", description = "Member 관련 API 문서")
@@ -62,6 +63,7 @@ public abstract class MemberDocsController {
     })
     public abstract ResponseEntity<ApiResponse<?>> updatePreference(
             @Valid PreferenceUpdateRequest request,
+            Long preferenceId,
             Long memberId
     );
 

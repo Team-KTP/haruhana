@@ -108,10 +108,12 @@ class MemberServiceUnitTest extends UnitTestSupport {
         // given
         var memberPreference = mock(MemberPreference.class);
 
-        given(memberReader.getMemberPreference(any())).willReturn(memberPreference);
+        given(memberReader.getMemberPreference(any(), any())).willReturn(memberPreference);
         given(memberPreference.isEqualsPreference(any(), any())).willReturn(false);
 
-        var updatePreference = new UpdatePreference(2L, ProblemDifficulty.MEDIUM);
+        long preferenceId = 2L;
+        long categoryTopicId = 1L;
+        var updatePreference = new UpdatePreference(preferenceId, categoryTopicId, ProblemDifficulty.MEDIUM);
 
         // when
         memberService.updatePreference(updatePreference, 2L);
@@ -125,10 +127,12 @@ class MemberServiceUnitTest extends UnitTestSupport {
         // given
         var memberPreference = mock(MemberPreference.class);
 
-        given(memberReader.getMemberPreference(any())).willReturn(memberPreference);
+        given(memberReader.getMemberPreference(any(), any())).willReturn(memberPreference);
         given(memberPreference.isEqualsPreference(any(Long.class), any(ProblemDifficulty.class))).willReturn(true);
 
-        var updatePreference = new UpdatePreference(2L, ProblemDifficulty.MEDIUM);
+        long preferenceId = 2L;
+        long categoryTopicId = 1L;
+        var updatePreference = new UpdatePreference(preferenceId, categoryTopicId, ProblemDifficulty.MEDIUM);
 
         // when
         memberService.updatePreference(updatePreference, 2L);

@@ -67,9 +67,9 @@ public class MemberReader {
         return memberPreferenceJpaRepository.findAllByEffectiveAtLessThanEqualAndStatus(targetDate, EntityStatus.ACTIVE);
     }
 
-    // NOTE: 삭제 예정 컴파일 에러를 방지하기 위해 남겨둔 메서드입니다. 추후 제거 예정입니다.
-    public MemberPreference getMemberPreference(Long memberId) {
-        return memberPreferenceJpaRepository.findByMemberIdWithMember(
+    public MemberPreference getMemberPreference(Long preferenceId, Long memberId) {
+        return memberPreferenceJpaRepository.findByIdAndMemberIdAndStatus(
+                preferenceId,
                 memberId,
                 EntityStatus.ACTIVE
         ).orElseThrow(() -> new HaruHanaException(ErrorType.NOT_FOUND_MEMBER_PREFERENCE));
