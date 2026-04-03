@@ -46,11 +46,8 @@ public class MemberService {
         memberValidator.validateNew(newProfile);
 
         Member member = memberManager.create(newProfile);
-
         MemberPreference memberPreference = memberManager.registerPreference(member, newPreference);
-
         streakManager.create(member);
-
         // 회원가입 시에만 오늘의 문제 문제 직접 생성 - Async 처리
         problemGenerator.generateInitialProblem(member, memberPreference.getCategoryTopic(), memberPreference.getDifficulty());
 
@@ -90,6 +87,26 @@ public class MemberService {
 
         log.info("[MemberService] 프로필 업데이트 완료 - memberId: {}, hasProfileImage: {}",
                 memberId, updateProfile.profileImageKey() != null);
+    }
+
+    /**
+     * 회원 선호 학습 정보 추가 등록 <br>
+     * 최대 등록 가능한 선호 학습 정보 개수와 중복 카테고리 존재 여부를 함께 검증합니다. <br>
+     * 추가된 선호 학습 정보는 당일부터 적용됩니다. <br>
+     * 추가된 선호 학습 정보에 해당하는 오늘의 문제를 직접 생성합니다. (Async 처리) <br>
+     * @param newPreference 추가할 선호 학습 정보
+     * @param memberId 회원 식별자
+     * */
+    @Transactional
+    public void appendPreference(NewPreference newPreference, Long memberId) {
+        Member member = memberReader.findWithLock(memberId);
+        memberValidator.validateAppendPreference(newPreference, memberId);
+        MemberPreference memberPreference = memberManager.registerPreference(member, newPreference);
+
+        problemGenerator.generateInitialProblem(member, memberPreference.getCategoryTopic(), memberPreference.getDifficulty());
+
+        log.info("[MemberService] 학습 선호도 추가 완료 - memberId: {}, categoryTopicId: {}, difficulty: {}",
+                memberId, newPreference.categoryTopicId(), newPreference.difficulty());
     }
 
     /**

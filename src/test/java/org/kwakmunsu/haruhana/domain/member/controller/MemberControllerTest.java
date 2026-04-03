@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.kwakmunsu.haruhana.ControllerTestSupport;
 import org.kwakmunsu.haruhana.domain.member.MemberFixture;
 import org.kwakmunsu.haruhana.domain.member.controller.dto.DeviceTokenSyncRequest;
+import org.kwakmunsu.haruhana.domain.member.controller.dto.PreferenceAppendRequest;
 import org.kwakmunsu.haruhana.domain.member.controller.dto.PreferenceUpdateRequest;
 import org.kwakmunsu.haruhana.domain.member.controller.dto.ProfileUpdateRequest;
 import org.kwakmunsu.haruhana.domain.member.enums.Role;
@@ -165,6 +166,53 @@ class MemberControllerTest extends ControllerTestSupport {
 
         // then
         verify(memberService, times(1)).checkLoginIdAvailable("사용가능한LoginId");
+    }
+
+    @TestMember
+    @Test
+    void 회원_학습_선호_정보_추가_Api를_요청한다() throws JsonProcessingException {
+        // given
+        var request = new PreferenceAppendRequest(1L, ProblemDifficulty.MEDIUM);
+        String requestJson = objectMapper.writeValueAsString(request);
+
+        // when & then
+        assertThat(mvcTester.post().uri("/v1/members/preferences")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestJson))
+                .apply(print())
+                .hasStatus(HttpStatus.CREATED);
+
+        verify(memberService, times(1)).appendPreference(any(), any());
+    }
+
+    @TestMember
+    @Test
+    void categoryTopicId가_null이면_400_에러를_반환한다() throws JsonProcessingException {
+        // given
+        var request = new PreferenceAppendRequest(null, ProblemDifficulty.MEDIUM);
+        String requestJson = objectMapper.writeValueAsString(request);
+
+        // when & then
+        assertThat(mvcTester.post().uri("/v1/members/preferences")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestJson))
+                .apply(print())
+                .hasStatus(HttpStatus.BAD_REQUEST);
+    }
+
+    @TestMember
+    @Test
+    void difficulty가_null이면_400_에러를_반환한다() throws JsonProcessingException {
+        // given
+        var request = new PreferenceAppendRequest(1L, null);
+        String requestJson = objectMapper.writeValueAsString(request);
+
+        // when & then
+        assertThat(mvcTester.post().uri("/v1/members/preferences")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestJson))
+                .apply(print())
+                .hasStatus(HttpStatus.BAD_REQUEST);
     }
 
 }

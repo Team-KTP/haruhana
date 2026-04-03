@@ -3,6 +3,8 @@ package org.kwakmunsu.haruhana.domain.member.service;
 import lombok.RequiredArgsConstructor;
 import org.kwakmunsu.haruhana.domain.member.entity.Member;
 import org.kwakmunsu.haruhana.domain.member.repository.MemberJpaRepository;
+import org.kwakmunsu.haruhana.domain.member.repository.MemberPreferenceJpaRepository;
+import org.kwakmunsu.haruhana.domain.member.service.dto.request.NewPreference;
 import org.kwakmunsu.haruhana.domain.member.service.dto.request.NewProfile;
 import org.kwakmunsu.haruhana.domain.member.service.dto.request.UpdateProfile;
 import org.kwakmunsu.haruhana.global.entity.EntityStatus;
@@ -14,7 +16,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class MemberValidator {
 
+    private static final int MAX_PREFERENCE_COUNT = 5;
+
     private final MemberJpaRepository memberJpaRepository;
+    private final MemberPreferenceJpaRepository memberPreferenceJpaRepository;
     private final NicknameFilter nicknameFilter;
 
     public void validateNew(NewProfile newProfile) {
@@ -36,13 +41,6 @@ public class MemberValidator {
         }
     }
 
-    private void validateNicknameAvailable(String nickname) {
-        nicknameFilter.validate(nickname);
-        if (memberJpaRepository.existsByNicknameAndStatus(nickname, EntityStatus.ACTIVE)) {
-            throw new HaruHanaException(ErrorType.DUPLICATE_NICKNAME);
-        }
-    }
-
     public boolean isNicknameAvailable(String nickname) {
         try {
             nicknameFilter.validate(nickname);
@@ -55,4 +53,31 @@ public class MemberValidator {
         return true;
     }
 
+    /**
+     * 회원 선호 학습 정보 등록 시, 최대 등록 가능한 선호 학습 정보 개수와 중복 카테고리 존재 여부를 검증한다.
+     *
+     */
+    public void validateAppendPreference(NewPreference newPreference, Long memberId) {
+        int currentPreferenceCount = memberPreferenceJpaRepository.countByMemberIdAndStatus(memberId, EntityStatus.ACTIVE);
+        if (currentPreferenceCount >= MAX_PREFERENCE_COUNT) {
+            throw new HaruHanaException(ErrorType.EXCEED_MAX_PREFERENCE_COUNT);
+        }
+
+        boolean isExistingPreference = memberPreferenceJpaRepository.existsByMemberIdAndCategoryTopicIdAndDifficultyAndStatus(
+                memberId,
+                newPreference.categoryTopicId(),
+                newPreference.difficulty(),
+                EntityStatus.ACTIVE
+        );
+        if (isExistingPreference) {
+            throw new HaruHanaException(ErrorType.DUPLICATE_PREFERENCE);
+        }
+    }
+
+    private void validateNicknameAvailable(String nickname) {
+        nicknameFilter.validate(nickname);
+        if (memberJpaRepository.existsByNicknameAndStatus(nickname, EntityStatus.ACTIVE)) {
+            throw new HaruHanaException(ErrorType.DUPLICATE_NICKNAME);
+        }
+    }
 }

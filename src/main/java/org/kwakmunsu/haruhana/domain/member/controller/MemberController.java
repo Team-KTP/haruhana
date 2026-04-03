@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.kwakmunsu.haruhana.domain.member.controller.dto.DeviceTokenSyncRequest;
 import org.kwakmunsu.haruhana.domain.member.controller.dto.MemberCreateRequest;
+import org.kwakmunsu.haruhana.domain.member.controller.dto.PreferenceAppendRequest;
 import org.kwakmunsu.haruhana.domain.member.controller.dto.PreferenceUpdateRequest;
 import org.kwakmunsu.haruhana.domain.member.controller.dto.ProfileUpdateRequest;
 import org.kwakmunsu.haruhana.domain.member.service.MemberProfileResponse;
@@ -36,6 +37,19 @@ public class MemberController extends MemberDocsController {
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(memberId));
+    }
+
+    @Override
+    @PostMapping("/v1/members/preferences")
+    public ResponseEntity<ApiResponse<?>> appendPreference(
+            @RequestBody @Valid PreferenceAppendRequest request,
+            @LoginMember Long memberId
+    ) {
+
+        memberService.appendPreference(request.toNewPreference(), memberId);
+
+        return ResponseEntity.ok(ApiResponse.success());
+
     }
 
     @Override

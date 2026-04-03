@@ -7,8 +7,11 @@ import org.kwakmunsu.haruhana.domain.member.entity.Member;
 import org.kwakmunsu.haruhana.domain.member.enums.Role;
 import org.kwakmunsu.haruhana.global.entity.EntityStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
+import jakarta.persistence.LockModeType;
 
 public interface MemberJpaRepository extends JpaRepository<Member, Long> {
 
@@ -16,6 +19,10 @@ public interface MemberJpaRepository extends JpaRepository<Member, Long> {
     boolean existsByNicknameAndStatus(String nickname, EntityStatus status);
     Optional<Member> findByLoginIdAndStatus(String loginId, EntityStatus status);
     Optional<Member> findByIdAndStatus(Long id, EntityStatus entityStatus);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT m FROM Member m WHERE m.id = :id AND m.status = :status")
+    Optional<Member> findByIdAndStatusWithLock(@Param("id") Long id, @Param("status") EntityStatus status);
     Optional<Member> findByRefreshTokenAndStatus(String refreshToken, EntityStatus status);
 
     @Query("""
