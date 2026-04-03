@@ -20,6 +20,9 @@ public interface MemberPreferenceJpaRepository extends JpaRepository<MemberPrefe
     Optional<MemberPreference> findByMemberIdAndStatus(Long memberId, EntityStatus status);
 
     @Query("SELECT mp FROM MemberPreference mp JOIN FETCH mp.member m JOIN FETCH mp.categoryTopic WHERE m.id = :memberId AND mp.status = :status")
+    List<MemberPreference> findAllByMemberIdWithMember(@Param("memberId") Long memberId, @Param("status") EntityStatus status);
+
+    @Query("SELECT mp FROM MemberPreference mp JOIN FETCH mp.member m JOIN FETCH mp.categoryTopic WHERE m.id = :memberId AND mp.status = :status")
     Optional<MemberPreference> findByMemberIdWithMember(@Param("memberId") Long memberId, @Param("status") EntityStatus status);
 
     @Modifying

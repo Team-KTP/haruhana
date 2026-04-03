@@ -51,7 +51,7 @@ public class MemberReader {
      * 특정 날짜 범위에 제출 기록이 없는 회원들을 조회합니다.
      *
      * @param startOfDay 조회 시작 시간 (포함)
-     * @param endOfDay 조회 종료 시간 (제외)
+     * @param endOfDay   조회 종료 시간 (제외)
      * @return 제출 기록이 없는 활성 회원 목록
      */
     public List<Member> findMembersWithoutSubmissionBetween(LocalDateTime startOfDay, LocalDateTime endOfDay) {
@@ -67,10 +67,23 @@ public class MemberReader {
         return memberPreferenceJpaRepository.findAllByEffectiveAtLessThanEqualAndStatus(targetDate, EntityStatus.ACTIVE);
     }
 
+    // NOTE: 삭제 예정 컴파일 에러를 방지하기 위해 남겨둔 메서드입니다. 추후 제거 예정입니다.
     public MemberPreference getMemberPreference(Long memberId) {
-        // 회원과 회원 정보는 라이프 사이클이 같기에 예외를 그냥 NOT_FOUND_MEMBER 로 통일
-        return memberPreferenceJpaRepository.findByMemberIdWithMember(memberId, EntityStatus.ACTIVE)
-                .orElseThrow(() -> new HaruHanaException(ErrorType.NOT_FOUND_MEMBER));
+        return memberPreferenceJpaRepository.findByMemberIdWithMember(
+                memberId,
+                EntityStatus.ACTIVE
+        ).orElseThrow(() -> new HaruHanaException(ErrorType.NOT_FOUND_MEMBER_PREFERENCE));
+    }
+
+    public List<MemberPreference> getMemberPreferences(Long memberId) {
+        List<MemberPreference> memberPreferences = memberPreferenceJpaRepository.findAllByMemberIdWithMember(
+                memberId,
+                EntityStatus.ACTIVE
+        );
+        if (memberPreferences.isEmpty()) {
+            throw new HaruHanaException(ErrorType.NOT_FOUND_MEMBER_PREFERENCE);
+        }
+        return memberPreferences;
     }
 
     public Member findByRefreshToken(String refreshToken) {

@@ -1,6 +1,7 @@
 package org.kwakmunsu.haruhana.domain.member.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.groups.Tuple.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
@@ -9,6 +10,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.time.LocalDate;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.kwakmunsu.haruhana.UnitTestSupport;
 import org.kwakmunsu.haruhana.domain.category.entity.CategoryTopic;
@@ -62,12 +64,13 @@ class MemberServiceUnitTest extends UnitTestSupport {
     void 회원_프로필을_조회한다() {
         // given
         var member = MemberFixture.createMember(Role.ROLE_MEMBER);
-        var memberPreference = MemberPreference.create(member, CategoryTopic.create(1L, "알고리즘"), ProblemDifficulty.EASY, LocalDate.now());
+        var spring = MemberPreference.create(member, CategoryTopic.create(1L, "spring"), ProblemDifficulty.EASY, LocalDate.now());
+        var network = MemberPreference.create(member, CategoryTopic.create(2L, "네트워크"), ProblemDifficulty.EASY, LocalDate.now());
 
         member.updateProfileImageObjectKey("profile-image-key");
         var profileImageUrl = "https://presigned-url.com/profile-image";
 
-        given(memberReader.getMemberPreference(member.getId())).willReturn(memberPreference);
+        given(memberReader.getMemberPreferences(member.getId())).willReturn(List.of(spring, network));
         given(storageProvider.generatePresignedReadUrl(member.getProfileImageObjectKey())).willReturn(profileImageUrl);
 
         // when
@@ -78,15 +81,25 @@ class MemberServiceUnitTest extends UnitTestSupport {
                 .extracting(
                         MemberProfileResponse::loginId,
                         MemberProfileResponse::nickname,
-                        MemberProfileResponse::categoryTopicName,
-                        MemberProfileResponse::difficulty,
                         MemberProfileResponse::profileImageUrl
                 ).containsExactly(
                         member.getLoginId(),
                         member.getNickname(),
-                        memberPreference.getCategoryTopic().getName(),
-                        memberPreference.getDifficulty().name(),
                         profileImageUrl
+                );
+        assertThat(memberProfileResponse.memberPreferences()).hasSize(2)
+                .extracting(
+                        MemberProfileResponse.MemberPreferenceResponse::categoryTopicName,
+                        MemberProfileResponse.MemberPreferenceResponse::difficulty
+                ).containsExactly(
+                        tuple(
+                                spring.getCategoryTopic().getName(),
+                                spring.getDifficulty().name()
+                        ),
+                        tuple(
+                                network.getCategoryTopic().getName(),
+                                network.getDifficulty().name()
+                        )
                 );
     }
 

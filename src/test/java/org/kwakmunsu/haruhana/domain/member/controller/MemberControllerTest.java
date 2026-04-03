@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import java.time.LocalDateTime;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.kwakmunsu.haruhana.ControllerTestSupport;
 import org.kwakmunsu.haruhana.domain.member.MemberFixture;
@@ -18,6 +19,7 @@ import org.kwakmunsu.haruhana.domain.member.controller.dto.PreferenceUpdateReque
 import org.kwakmunsu.haruhana.domain.member.controller.dto.ProfileUpdateRequest;
 import org.kwakmunsu.haruhana.domain.member.enums.Role;
 import org.kwakmunsu.haruhana.domain.member.service.MemberProfileResponse;
+import org.kwakmunsu.haruhana.domain.member.service.MemberProfileResponse.MemberPreferenceResponse;
 import org.kwakmunsu.haruhana.domain.problem.enums.ProblemDifficulty;
 import org.kwakmunsu.haruhana.security.annotation.TestMember;
 import org.springframework.http.HttpStatus;
@@ -53,10 +55,14 @@ class MemberControllerTest extends ControllerTestSupport {
                 "loginId",
                 "nickname",
                 LocalDateTime.now(),
-                "알고리즘",
-                ProblemDifficulty.EASY.name(),
                 Role.ROLE_MEMBER.name(),
-                null
+                null,
+                List.of(MemberPreferenceResponse.builder()
+                        .preferenceId(1L)
+                        .categoryTopicName("자료구조")
+                        .difficulty(ProblemDifficulty.EASY.name())
+                        .build()
+                )
         );
         given(memberService.getProfile(any())).willReturn(memberProfileResponse);
 
@@ -67,8 +73,10 @@ class MemberControllerTest extends ControllerTestSupport {
                 .bodyJson()
                 .hasPathSatisfying("$.data.loginId", v -> v.assertThat().isEqualTo(memberProfileResponse.loginId()))
                 .hasPathSatisfying("$.data.nickname", v -> v.assertThat().isEqualTo(memberProfileResponse.nickname()))
-                .hasPathSatisfying("$.data.categoryTopicName", v -> v.assertThat().isEqualTo(memberProfileResponse.categoryTopicName()))
-                .hasPathSatisfying("$.data.difficulty", v -> v.assertThat().isEqualTo(memberProfileResponse.difficulty()))
+                .hasPathSatisfying("$.data.memberPreferences[0].categoryTopicName",
+                        v -> v.assertThat().isEqualTo(memberProfileResponse.memberPreferences().getFirst().categoryTopicName()))
+                .hasPathSatisfying("$.data.memberPreferences[0].difficulty",
+                        v -> v.assertThat().isEqualTo(memberProfileResponse.memberPreferences().getFirst().difficulty()))
                 .hasPathSatisfying("$.data.role", v -> v.assertThat().isEqualTo(memberProfileResponse.role()));
     }
 
@@ -145,7 +153,6 @@ class MemberControllerTest extends ControllerTestSupport {
                 .hasPathSatisfying("$.data", v -> v.assertThat().isEqualTo(true))
                 .hasPathSatisfying("$.error", v -> v.assertThat().isNull());
 
-
         // then
         verify(memberService, times(1)).checkNicknameAvailable("사용가능한닉네임");
     }
@@ -180,7 +187,7 @@ class MemberControllerTest extends ControllerTestSupport {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestJson))
                 .apply(print())
-                .hasStatus(HttpStatus.CREATED);
+                .hasStatusOk();
 
         verify(memberService, times(1)).appendPreference(any(), any());
     }
