@@ -25,6 +25,29 @@ public class NotificationScheduler {
     private final ErrorNotificationSender errorNotificationSender;
 
     /**
+     * 매일 오전 8시 30분, 전체 회원에게 오늘의 학습을 독려하는 푸시 알림을 전송합니다.
+     */
+    // NOTE: 추후 성능 이슈 발생 시, bulk send 또는 Async 처리 고려
+    @Scheduled(cron = "0 30 8 * * ?")
+    public void notifyDailyStudyReminder() {
+        log.info("[NotificationScheduler] 오전 학습 독려 알림 전송 시작");
+
+        try {
+            List<String> deviceTokens = memberDeviceReader.findAllActiveDeviceTokens();
+
+            deviceTokens.forEach(token -> notificationSender.sendNotification(
+                    token,
+                    NotificationMessage.DAILY_STUDY_REMINDER.getTitle(),
+                    NotificationMessage.DAILY_STUDY_REMINDER.getMessage(),
+                    NotificationType.DAILY_STUDY_REMINDER
+            ));
+        } catch (Exception e) {
+            log.error("[NotificationScheduler] 오전 학습 독려 알림 전송 중 예기치 않은 오류 발생", e);
+            errorNotificationSender.sendErrorNotification("[NotificationScheduler] 오전 학습 독려 알림 전송 중 예기치 않은 오류 발생: " + e.getMessage(), e);
+        }
+    }
+
+    /**
      * 매일 21시, 오늘 문제를 풀지 않은 회원들에게 푸시 알림을 전송합니다.
      */
     // NOTE: 추후 성능 이슈 발생 시, bulk send 또는 Async 처리 고려
@@ -36,7 +59,12 @@ public class NotificationScheduler {
             LocalDate today = LocalDate.now();
             List<String> deviceTokens = getUnsolvedMemberDeviceTokens(today);
 
-            sendBulkNotifications(deviceTokens);
+            deviceTokens.forEach(token -> notificationSender.sendNotification(
+                    token,
+                    NotificationMessage.UNSOLVED_PROBLEM_REMINDER.getTitle(),
+                    NotificationMessage.UNSOLVED_PROBLEM_REMINDER.getMessage(),
+                    NotificationType.UNSOLVED_PROBLEM_REMINDER
+            ));
         } catch (Exception e) {
             log.error("[NotificationScheduler] 알림 전송 스케줄러 실행 중 예기치 않은 오류 발생", e);
             errorNotificationSender.sendErrorNotification("[NotificationScheduler] 알림 전송 스케줄러 실행 중 예기치 않은 오류 발생: " + e.getMessage(), e);
@@ -51,15 +79,6 @@ public class NotificationScheduler {
         }
 
         return memberDeviceReader.findDeviceTokensByMemberIds(unsolvedMemberIds);
-    }
-
-    private void sendBulkNotifications(List<String> deviceTokens) {
-        deviceTokens.forEach(token -> notificationSender.sendNotification(
-                token,
-                NotificationMessage.UNSOLVED_PROBLEM_REMINDER.getTitle(),
-                NotificationMessage.UNSOLVED_PROBLEM_REMINDER.getMessage(),
-                NotificationType.UNSOLVED_PROBLEM_REMINDER
-        ));
     }
 
 }
