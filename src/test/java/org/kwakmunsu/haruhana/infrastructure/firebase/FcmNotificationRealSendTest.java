@@ -1,5 +1,6 @@
 package org.kwakmunsu.haruhana.infrastructure.firebase;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.kwakmunsu.haruhana.domain.notification.enums.NotificationType;
 import org.kwakmunsu.haruhana.global.support.notification.NotificationSender;
@@ -13,7 +14,7 @@ import org.springframework.test.context.ActiveProfiles;
  * - 수동으로 확인하고 싶을 때 @Disabled 제거 후 실행
  * - FCM_TOKEN 에 클라이언트 기기 토큰을 입력 후 실행
  */
-//@Disabled("수동 실행 전용: FCM 실제 전송 테스트")
+@Disabled("수동 실행 전용: FCM 실제 전송 테스트")
 @ActiveProfiles("local")
 @SpringBootTest
 class FcmNotificationRealSendTest {
