@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.times;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -198,6 +199,90 @@ class FeedbackEventHandlerIntegrationTest extends IntegrationTestSupport {
                         feedbackRepository.findBySubmissionIdAndStatusOrderByCreatedAtDesc(
                                 firstResponse.submissionId(), EntityStatus.ACTIVE)
                 ).hasSize(2));
+    }
+
+    @Test
+    void AI_채점_실패_시_지수_백오프로_최대_3회_재시도한다() {
+        // given
+        var member = memberJpaRepository.save(MemberFixture.createMemberWithOutId(Role.ROLE_MEMBER));
+
+        var categoryTopic = categoryTopicJpaRepository.findByName("Java")
+                .orElseThrow(() -> new RuntimeException("Java 토픽이 존재하지 않습니다"));
+
+        var problem = problemJpaRepository.save(Problem.create(
+                "테스트 문제",
+                "테스트 설명",
+                "AI 모범 답안",
+                categoryTopic,
+                ProblemDifficulty.MEDIUM,
+                LocalDate.now(),
+                "V1_PROMPT"
+        ));
+
+        var dailyProblem = dailyProblemJpaRepository.save(createDailyProblemFixture(member, problem));
+
+        // 첫 2회 실패 후 3회차에 성공
+        given(gradingAiAdapter.grade(any(), any(), any()))
+                .willThrow(new HaruHanaException(ErrorType.FAIL_TO_GRADE_SUBMISSION))
+                .willThrow(new HaruHanaException(ErrorType.FAIL_TO_GRADE_SUBMISSION))
+                .willReturn(new FeedbackGradingResult("GOOD", "핵심 개념 명확히 설명", "동작 원리 설명 부족", "트랜잭션 전파 속성 추가 언급"));
+
+        // when - 제출 커밋 후 @Async 채점 핸들러 실행
+        var response = submissionService.submitSolution(dailyProblem.getId(), member.getId(), "사용자 답변");
+
+        // then - 재시도 끝에 피드백 저장됨
+        await()
+                .atMost(Duration.ofSeconds(10))
+                .untilAsserted(() -> {
+                    var feedbacks = feedbackRepository.findBySubmissionIdAndStatusOrderByCreatedAtDesc(
+                            response.submissionId(), EntityStatus.ACTIVE
+                    );
+                    assertThat(feedbacks).hasSize(1);
+                    // AI 어댑터가 3회 호출되었는지 검증 (1회 초기 + 2회 재시도)
+                    verify(gradingAiAdapter, times(3)).grade(any(), any(), any());
+                });
+    }
+
+    @Test
+    void AI_채점_재시도_3회_모두_실패하면_피드백이_저장되지_않는다() {
+        // given
+        var member = memberJpaRepository.save(MemberFixture.createMemberWithOutId(Role.ROLE_MEMBER));
+
+        var categoryTopic = categoryTopicJpaRepository.findByName("Java")
+                .orElseThrow(() -> new RuntimeException("Java 토픽이 존재하지 않습니다"));
+
+        var problem = problemJpaRepository.save(Problem.create(
+                "테스트 문제",
+                "테스트 설명",
+                "AI 모범 답안",
+                categoryTopic,
+                ProblemDifficulty.MEDIUM,
+                LocalDate.now(),
+                "V1_PROMPT"
+        ));
+
+        var dailyProblem = dailyProblemJpaRepository.save(createDailyProblemFixture(member, problem));
+
+        // 3회 모두 실패
+        given(gradingAiAdapter.grade(any(), any(), any()))
+                .willThrow(new HaruHanaException(ErrorType.FAIL_TO_GRADE_SUBMISSION));
+
+        // when - 제출 커밋 후 @Async 채점 핸들러 실행
+        var response = submissionService.submitSolution(dailyProblem.getId(), member.getId(), "사용자 답변");
+
+        // then - 제출은 정상 커밋되지만 피드백은 저장되지 않음, AI 어댑터가 3회 호출됨
+        await()
+                .atMost(Duration.ofSeconds(10))
+                .untilAsserted(() -> {
+                    var feedbacks = feedbackRepository.findBySubmissionIdAndStatusOrderByCreatedAtDesc(
+                            response.submissionId(), EntityStatus.ACTIVE
+                    );
+                    assertThat(feedbacks).isEmpty();
+                    // AI 어댑터가 3회 호출되었는지 검증 (1회 초기 + 2회 재시도)
+                    verify(gradingAiAdapter, times(3)).grade(any(), any(), any());
+                    // 에러 알림 전송됨
+                    verify(errorNotificationSender, atLeastOnce()).sendErrorNotification(any(), any());
+                });
     }
 
     private DailyProblem createDailyProblemFixture(Member member, Problem problem) {
