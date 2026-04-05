@@ -17,6 +17,13 @@ public interface SubmissionJpaRepository extends JpaRepository<Submission, Long>
 
     @Query("""
             SELECT s FROM Submission s
+            WHERE s.id = :submissionId
+            AND s.status = :status
+            """)
+    Optional<Submission> findByIdAndStatus(@Param("submissionId") Long submissionId, @Param("status") EntityStatus status);
+
+    @Query("""
+            SELECT s FROM Submission s
             JOIN FETCH s.dailyProblem dp
             JOIN FETCH dp.problem p
             WHERE s.id = :submissionId

@@ -54,7 +54,7 @@ public class FeedbackGradingService {
      */
     @Transactional(readOnly = true)
     public List<FeedbackResponse> getFeedbacks(Long submissionId, Long memberId) {
-        Submission submission = submissionReader.findWithProblem(submissionId);
+        Submission submission = submissionReader.findById(submissionId);
 
         if (!submission.isAuthor(memberId)) {
             throw new HaruHanaException(ErrorType.FORBIDDEN_ERROR);

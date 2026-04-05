@@ -21,6 +21,11 @@ public class SubmissionReader {
                 .orElseThrow(() -> new HaruHanaException(ErrorType.NOT_FOUND_SUBMISSION));
     }
 
+    public Submission findById(Long submissionId) {
+        return submissionJpaRepository.findByIdAndStatus(submissionId, EntityStatus.ACTIVE)
+                .orElseThrow(() -> new HaruHanaException(ErrorType.NOT_FOUND_SUBMISSION));
+    }
+
     public Optional<Submission> findByMemberIdAndDailyProblemId(Long memberId, Long dailyProblemId) {
         return submissionJpaRepository.findByMemberIdAndDailyProblemIdAndStatus(
                 memberId,

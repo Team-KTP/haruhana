@@ -83,7 +83,7 @@ class FeedbackGradingServiceUnitTest extends UnitTestSupport {
         var submission = SubmissionFixture.createSubmission(member, dailyProblem);
         var feedback = SubmissionFeedback.create(submission, FeedbackGrade.GOOD, "강점", "약점", "제안");
 
-        given(submissionReader.findWithProblem(submission.getId())).willReturn(submission);
+        given(submissionReader.findById(submission.getId())).willReturn(submission);
         given(feedbackReader.findAllBySubmissionId(submission.getId())).willReturn(List.of(feedback));
 
         // when
@@ -105,7 +105,7 @@ class FeedbackGradingServiceUnitTest extends UnitTestSupport {
         var dailyProblem = DailyProblemFixture.createDailyProblem(member, problem);
         var submission = SubmissionFixture.createSubmission(member, dailyProblem);
 
-        given(submissionReader.findWithProblem(submission.getId())).willReturn(submission);
+        given(submissionReader.findById(submission.getId())).willReturn(submission);
         given(feedbackReader.findAllBySubmissionId(submission.getId())).willReturn(List.of());
 
         // when
@@ -125,7 +125,7 @@ class FeedbackGradingServiceUnitTest extends UnitTestSupport {
         var submission = SubmissionFixture.createSubmission(member, dailyProblem);
         var otherMemberId = 99L;
 
-        given(submissionReader.findWithProblem(submission.getId())).willReturn(submission);
+        given(submissionReader.findById(submission.getId())).willReturn(submission);
 
         // when & then
         assertThatThrownBy(() -> feedbackGradingService.getFeedbacks(submission.getId(), otherMemberId))
