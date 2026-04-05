@@ -95,6 +95,7 @@ class GradingAiAdapterRealApiTest extends IntegrationTestSupport {
         // then
         assertThat(result).isNotNull();
         assertThat(result.grade()).isEqualTo("EXCELLENT");
+        assertThat(result.weaknesses()).isNotBlank();
         assertThat(result.strengths()).isNotBlank();
         assertThat(result.suggestion()).isNotBlank();
 
