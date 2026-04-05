@@ -8,6 +8,7 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
@@ -29,12 +30,15 @@ public class SubmissionFeedback extends BaseEntity {
     @Enumerated(value = EnumType.STRING)
     private FeedbackGrade grade;
 
+    @Lob
     @Column(nullable = false)
     private String strengths;
 
+    @Lob
     @Column(nullable = false)
     private String weaknesses;
 
+    @Lob
     @Column(nullable = false)
     private String suggestion;
 
