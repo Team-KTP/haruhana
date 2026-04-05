@@ -24,13 +24,15 @@ class FeedbackEventHandlerUnitTest extends UnitTestSupport {
     @Test
     void 이벤트_수신_시_채점_서비스를_호출한다() {
         // given
-        var event = SubmissionCompletedEvent.of(1L, 1L, true, true);
+        long memberId = 1L;
+        long submissionId = 2L;
+        var event = SubmissionCompletedEvent.of(memberId, submissionId, true, true);
 
         // when
         feedbackEventHandler.handleSubmissionCompleted(event);
 
         // then
-        verify(feedbackGradingService, times(1)).grade(1L);
+        verify(feedbackGradingService, times(1)).grade(memberId);
     }
 
 }
