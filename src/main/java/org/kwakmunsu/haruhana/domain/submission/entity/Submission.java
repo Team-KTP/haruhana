@@ -62,4 +62,8 @@ public class Submission extends BaseEntity {
         this.answer = answer;
     }
 
+    public boolean isAuthor(Long authorId) {
+        return this.member.getId().equals(authorId);
+    }
+
 }
