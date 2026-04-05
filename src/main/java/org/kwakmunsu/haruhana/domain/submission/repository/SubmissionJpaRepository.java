@@ -16,6 +16,15 @@ public interface SubmissionJpaRepository extends JpaRepository<Submission, Long>
     Optional<Submission> findByMemberIdAndDailyProblemIdAndStatus(Long memberId, Long dailyProblemId, EntityStatus status);
 
     @Query("""
+            SELECT s FROM Submission s
+            JOIN FETCH s.dailyProblem dp
+            JOIN FETCH dp.problem p
+            WHERE s.id = :submissionId
+            AND s.status = :status
+            """)
+    Optional<Submission> findWithProblemById(@Param("submissionId") Long submissionId, @Param("status") EntityStatus status);
+
+    @Query("""
             SELECT DISTINCT s.dailyProblem.assignedAt
             FROM Submission s
             WHERE s.member.id = :memberId

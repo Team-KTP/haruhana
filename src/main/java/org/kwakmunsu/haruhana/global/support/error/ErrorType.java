@@ -40,6 +40,10 @@ public enum ErrorType {
     // DAILY PROBLEM
     NOT_FOUND_DAILY_PROBLEM  (HttpStatus.NOT_FOUND, "오늘의 문제를 찾을 수 없습니다.", LogLevel.INFO),
 
+    // SUBMISSION
+    NOT_FOUND_SUBMISSION (HttpStatus.NOT_FOUND, "제출 기록을 찾을 수 없습니다.", LogLevel.INFO),
+    FAIL_TO_GRADE_SUBMISSION (HttpStatus.INTERNAL_SERVER_ERROR, "AI 채점에 실패했습니다.", LogLevel.ERROR),
+
     // PROBLEM
     FAIL_TO_GENERATE_PROBLEM (HttpStatus.INTERNAL_SERVER_ERROR, "문제 생성에 실패했습니다.", LogLevel.ERROR),
 
