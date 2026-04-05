@@ -16,4 +16,8 @@ public class MemberDeviceReader {
         return memberDeviceJpaRepository.findDeviceTokensByMemberIdsAndStatus(memberIds, EntityStatus.ACTIVE);
     }
 
+    public List<String> findAllActiveDeviceTokens() {
+        return memberDeviceJpaRepository.findAllDeviceTokensByStatus(EntityStatus.ACTIVE);
+    }
+
 }

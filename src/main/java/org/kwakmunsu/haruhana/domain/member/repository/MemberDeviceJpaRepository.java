@@ -23,6 +23,9 @@ public interface MemberDeviceJpaRepository extends JpaRepository<MemberDevice, L
             @Param("status") EntityStatus status
     );
 
+    @Query("SELECT md.deviceToken FROM MemberDevice md WHERE md.status = :status")
+    List<String> findAllDeviceTokensByStatus(@Param("status") EntityStatus status);
+
     @Modifying
     @Query("DELETE FROM MemberDevice md WHERE md.member.id = :memberId")
     void deleteAllByMemberId(@Param("memberId") Long memberId);
