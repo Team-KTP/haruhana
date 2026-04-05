@@ -21,11 +21,14 @@ import org.kwakmunsu.haruhana.global.support.response.ApiResponse;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 @Slf4j
 @RequiredArgsConstructor
 public class JwtFilter extends OncePerRequestFilter {
+
+    private static final AntPathMatcher PATH_MATCHER = new AntPathMatcher();
 
     private final JwtProvider jwtProvider;
     private final ObjectMapper objectMapper;
@@ -33,8 +36,9 @@ public class JwtFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
-        return Arrays.stream(SecurityPaths.PERMIT_ALL).anyMatch(path::startsWith)
-                || Arrays.stream(SecurityPaths.ACTUATOR_PERMIT).anyMatch(path::equals);
+        return Arrays.stream(SecurityPaths.PERMIT_ALL)
+                .anyMatch(pattern -> PATH_MATCHER.match(pattern, path))
+                || Arrays.asList(SecurityPaths.ACTUATOR_PERMIT).contains(path);
     }
 
     @Override
