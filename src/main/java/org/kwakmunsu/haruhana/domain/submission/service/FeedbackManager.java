@@ -15,7 +15,7 @@ public class FeedbackManager {
     private final SubmissionFeedbackJpaRepository feedbackRepository;
 
     public void save(Submission submission, FeedbackGradingResult result) {
-        FeedbackGrade grade = FeedbackGrade.valueOf(result.grade());
+        FeedbackGrade grade = FeedbackGrade.valueOf(result.grade().trim().toUpperCase());
         feedbackRepository.save(SubmissionFeedback.create(
                 submission,
                 grade,
