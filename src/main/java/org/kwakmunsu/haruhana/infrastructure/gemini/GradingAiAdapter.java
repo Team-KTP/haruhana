@@ -22,7 +22,7 @@ public class GradingAiAdapter {
             result.validate();
             return result;
         } catch (Exception e) {
-            log.error("[GradingAiAdapter] AI 채점 실패 - problemDescription={}, aiAnswer={}, userAnswer={}", problemDescription, aiAnswer, userAnswer, e);
+            log.error("[GradingAiAdapter] AI 채점 실패 - problemDescription={}", problemDescription, e);
             throw new HaruHanaException(ErrorType.FAIL_TO_GRADE_SUBMISSION);
         }
     }
