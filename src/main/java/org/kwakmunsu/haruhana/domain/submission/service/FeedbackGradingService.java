@@ -31,7 +31,6 @@ public class FeedbackGradingService {
      *
      * @param submissionId 채점 대상 제출 ID
      */
-    @Transactional
     public void grade(Long submissionId) {
         Submission submission = submissionReader.findWithProblem(submissionId);
         Problem problem = submission.getDailyProblem().getProblem();
