@@ -18,7 +18,9 @@ public class GradingAiAdapter {
     public FeedbackGradingResult grade(String problemDescription, String aiAnswer, String userAnswer) {
         String prompt = Prompt.GRADING_PROMPT.generateGrading(problemDescription, aiAnswer, userAnswer);
         try {
-            return chatService.sendPrompt(prompt, FeedbackGradingResult.class);
+            FeedbackGradingResult result = chatService.sendPrompt(prompt, FeedbackGradingResult.class);
+            result.validate();
+            return result;
         } catch (Exception e) {
             log.error("[GradingAiAdapter] AI 채점 실패 - problemDescription={}, aiAnswer={}, userAnswer={}", problemDescription, aiAnswer, userAnswer, e);
             throw new HaruHanaException(ErrorType.FAIL_TO_GRADE_SUBMISSION);
