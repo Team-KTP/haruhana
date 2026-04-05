@@ -14,7 +14,7 @@ public class FeedbackReader {
     private final SubmissionFeedbackJpaRepository feedbackRepository;
 
     public List<SubmissionFeedback> findAllBySubmissionId(Long submissionId) {
-        return feedbackRepository.findBySubmissionIdAndStatusOrderByGradedAtDesc(submissionId, EntityStatus.ACTIVE);
+        return feedbackRepository.findBySubmissionIdAndStatusOrderByCreatedAtDesc(submissionId, EntityStatus.ACTIVE);
     }
 
 }

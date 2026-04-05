@@ -107,7 +107,7 @@ class FeedbackEventHandlerIntegrationTest extends IntegrationTestSupport {
         await()
                 .atMost(Duration.ofSeconds(5))
                 .untilAsserted(() -> {
-                    var feedbacks = feedbackRepository.findBySubmissionIdAndStatusOrderByGradedAtDesc(
+                    var feedbacks = feedbackRepository.findBySubmissionIdAndStatusOrderByCreatedAtDesc(
                             response.submissionId(), EntityStatus.ACTIVE
                     );
                     assertThat(feedbacks).hasSize(1);
@@ -144,7 +144,7 @@ class FeedbackEventHandlerIntegrationTest extends IntegrationTestSupport {
         await()
                 .atMost(Duration.ofSeconds(5))
                 .untilAsserted(() -> {
-                    var feedbacks = feedbackRepository.findBySubmissionIdAndStatusOrderByGradedAtDesc(
+                    var feedbacks = feedbackRepository.findBySubmissionIdAndStatusOrderByCreatedAtDesc(
                             response.submissionId(), EntityStatus.ACTIVE
                     );
                     assertThat(feedbacks).isEmpty();
@@ -182,7 +182,7 @@ class FeedbackEventHandlerIntegrationTest extends IntegrationTestSupport {
         await()
                 .atMost(Duration.ofSeconds(5))
                 .untilAsserted(() -> assertThat(
-                        feedbackRepository.findBySubmissionIdAndStatusOrderByGradedAtDesc(
+                        feedbackRepository.findBySubmissionIdAndStatusOrderByCreatedAtDesc(
                                 firstResponse.submissionId(), EntityStatus.ACTIVE)
                 ).hasSize(1));
 
@@ -193,7 +193,7 @@ class FeedbackEventHandlerIntegrationTest extends IntegrationTestSupport {
         await()
                 .atMost(Duration.ofSeconds(5))
                 .untilAsserted(() -> assertThat(
-                        feedbackRepository.findBySubmissionIdAndStatusOrderByGradedAtDesc(
+                        feedbackRepository.findBySubmissionIdAndStatusOrderByCreatedAtDesc(
                                 firstResponse.submissionId(), EntityStatus.ACTIVE)
                 ).hasSize(2));
     }

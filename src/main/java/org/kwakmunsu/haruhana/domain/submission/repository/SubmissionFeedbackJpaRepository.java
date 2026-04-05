@@ -7,6 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface SubmissionFeedbackJpaRepository extends JpaRepository<SubmissionFeedback, Long> {
 
-    List<SubmissionFeedback> findBySubmissionIdAndStatusOrderByGradedAtDesc(Long submissionId, EntityStatus status);
+    List<SubmissionFeedback> findBySubmissionIdAndStatusOrderByCreatedAtDesc(Long submissionId, EntityStatus status);
 
 }
