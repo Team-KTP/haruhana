@@ -32,7 +32,7 @@ class FeedbackEventHandlerUnitTest extends UnitTestSupport {
         feedbackEventHandler.handleSubmissionCompleted(event);
 
         // then
-        verify(feedbackGradingService, times(1)).grade(memberId);
+        verify(feedbackGradingService, times(1)).grade(submissionId);
     }
 
 }
