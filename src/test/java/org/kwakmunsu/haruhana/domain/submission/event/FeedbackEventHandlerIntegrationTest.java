@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import java.time.Duration;
 import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.kwakmunsu.haruhana.IntegrationTestSupport;
@@ -18,6 +19,7 @@ import org.kwakmunsu.haruhana.domain.category.repository.CategoryTopicJpaReposit
 import org.kwakmunsu.haruhana.domain.dailyproblem.entity.DailyProblem;
 import org.kwakmunsu.haruhana.domain.dailyproblem.repository.DailyProblemJpaRepository;
 import org.kwakmunsu.haruhana.domain.member.MemberFixture;
+import org.kwakmunsu.haruhana.domain.member.entity.Member;
 import org.kwakmunsu.haruhana.domain.member.enums.Role;
 import org.kwakmunsu.haruhana.domain.member.repository.MemberJpaRepository;
 import org.kwakmunsu.haruhana.domain.problem.entity.Problem;
@@ -95,7 +97,7 @@ class FeedbackEventHandlerIntegrationTest extends IntegrationTestSupport {
                 "V1_PROMPT"
         ));
 
-        var dailyProblem = dailyProblemJpaRepository.save(DailyProblem.create(member, problem, LocalDate.now()));
+        var dailyProblem = dailyProblemJpaRepository.save(createDailyProblemFixture(member, problem));
 
         given(gradingAiAdapter.grade(any(), any(), any()))
                 .willReturn(new FeedbackGradingResult("GOOD", "핵심 개념 명확히 설명", "동작 원리 설명 부족", "트랜잭션 전파 속성 추가 언급"));
@@ -132,7 +134,7 @@ class FeedbackEventHandlerIntegrationTest extends IntegrationTestSupport {
                 "V1_PROMPT"
         ));
 
-        var dailyProblem = dailyProblemJpaRepository.save(DailyProblem.create(member, problem, LocalDate.now()));
+        var dailyProblem = dailyProblemJpaRepository.save(createDailyProblemFixture(member, problem));
 
         given(gradingAiAdapter.grade(any(), any(), any()))
                 .willThrow(new HaruHanaException(ErrorType.FAIL_TO_GRADE_SUBMISSION));
@@ -170,7 +172,7 @@ class FeedbackEventHandlerIntegrationTest extends IntegrationTestSupport {
                 "V1_PROMPT"
         ));
 
-        var dailyProblem = dailyProblemJpaRepository.save(DailyProblem.create(member, problem, LocalDate.now()));
+        var dailyProblem = dailyProblemJpaRepository.save(createDailyProblemFixture(member, problem));
 
         given(gradingAiAdapter.grade(any(), any(), any()))
                 .willReturn(new FeedbackGradingResult("EXCELLENT", "매우 상세한 설명", "없음", "더 다양한 예시 추가"));
@@ -196,6 +198,10 @@ class FeedbackEventHandlerIntegrationTest extends IntegrationTestSupport {
                         feedbackRepository.findBySubmissionIdAndStatusOrderByCreatedAtDesc(
                                 firstResponse.submissionId(), EntityStatus.ACTIVE)
                 ).hasSize(2));
+    }
+
+    private DailyProblem createDailyProblemFixture(Member member, Problem problem) {
+        return DailyProblem.create(member, problem, LocalDate.now());
     }
 
 }
