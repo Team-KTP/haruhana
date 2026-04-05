@@ -42,9 +42,6 @@ public class SubmissionFeedback extends BaseEntity {
     @Column(nullable = false)
     private String suggestion;
 
-    @Column(nullable = false)
-    private LocalDateTime gradedAt;
-
     public static SubmissionFeedback create(
             Submission submission,
             FeedbackGrade grade,
@@ -59,7 +56,6 @@ public class SubmissionFeedback extends BaseEntity {
         feedback.strengths  = requireNonNull(strengths);
         feedback.weaknesses = requireNonNull(weaknesses);
         feedback.suggestion = requireNonNull(suggestion);
-        feedback.gradedAt   = LocalDateTime.now();
 
         return feedback;
     }
