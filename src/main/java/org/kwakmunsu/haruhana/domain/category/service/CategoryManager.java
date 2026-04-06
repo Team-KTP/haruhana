@@ -68,9 +68,9 @@ public class CategoryManager {
 
         if (category.isDeleted()) return;
 
-        List<CategoryGroup> groups = categoryGroupJpaRepository.findByCategoryId(categoryId);
+        List<CategoryGroup> groups = categoryGroupJpaRepository.findByCategoryIdAndStatus(categoryId, EntityStatus.ACTIVE);
         groups.forEach(group -> {
-            categoryTopicJpaRepository.findByGroupId(group.getId())
+            categoryTopicJpaRepository.findByGroupIdAndStatus(group.getId(), EntityStatus.ACTIVE)
                     .forEach(CategoryTopic::delete);
             group.delete();
         });
@@ -96,7 +96,7 @@ public class CategoryManager {
 
         if (group.isDeleted()) return;
 
-        categoryTopicJpaRepository.findByGroupId(groupId)
+        categoryTopicJpaRepository.findByGroupIdAndStatus(groupId, EntityStatus.ACTIVE)
                 .forEach(CategoryTopic::delete);
 
         group.delete();

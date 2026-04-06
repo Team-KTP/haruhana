@@ -9,7 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface CategoryGroupJpaRepository extends JpaRepository<CategoryGroup, Long> {
 
     Optional<CategoryGroup> findByIdAndStatus(Long id, EntityStatus status);
-    List<CategoryGroup> findByCategoryId(Long categoryId);
+    List<CategoryGroup> findByCategoryIdAndStatus(Long categoryId, EntityStatus status);
     boolean existsByNameAndStatus(String name, EntityStatus status);
     boolean existsByIdAndStatus(Long groupId, EntityStatus status);
 

@@ -10,7 +10,7 @@ public interface CategoryTopicJpaRepository extends JpaRepository<CategoryTopic,
 
     Optional<CategoryTopic> findByIdAndStatus(Long id, EntityStatus status);
     Optional<CategoryTopic> findByName(String name);
-    List<CategoryTopic> findByGroupId(Long groupId);
+    List<CategoryTopic> findByGroupIdAndStatus(Long groupId, EntityStatus status);
     boolean existsByNameAndStatus(String name, EntityStatus status);
 
 }
