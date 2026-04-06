@@ -27,7 +27,11 @@ public class DailyProblemService {
      *
      * @param memberId 회원 ID
      */
-    @Cacheable(cacheNames = "todayProblem", key = "#memberId + ':' + T(java.time.LocalDate).now()")
+    @Cacheable(
+            cacheNames = "todayProblem",
+            key = "#memberId + ':' + T(java.time.LocalDate).now()",
+            unless = "#result == null || #result.isEmpty()"
+    )
     public List<TodayProblemResponse> getTodayProblem(Long memberId) {
         log.debug("[DailyProblemService] 오늘의 문제 캐시 미스 - 조회 시작");
         List<DailyProblem> dailyProblems = dailyProblemReader.findDailyProblemsByMember(memberId);
