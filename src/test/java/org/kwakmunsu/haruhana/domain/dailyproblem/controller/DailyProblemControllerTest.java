@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import com.fasterxml.jackson.core.JsonProcessingException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.kwakmunsu.haruhana.ControllerTestSupport;
 import org.kwakmunsu.haruhana.domain.dailyproblem.controller.dto.SubmitSolutionRequest;
@@ -35,19 +36,19 @@ class DailyProblemControllerTest extends ControllerTestSupport {
                 false
         );
 
-        given(dailyProblemService.getTodayProblem(any())).willReturn(response);
+        given(dailyProblemService.getTodayProblem(any())).willReturn(List.of(response));
 
         // when & then
         assertThat(mvcTester.get().uri("/v1/daily-problem/today"))
                 .apply(print())
                 .hasStatusOk()
                 .bodyJson()
-                .hasPathSatisfying("data.id", v -> v.assertThat().isEqualTo(response.id().intValue()))
-                .hasPathSatisfying("data.title", v -> v.assertThat().isEqualTo(response.title()))
-                .hasPathSatisfying("data.description", v -> v.assertThat().isEqualTo(response.description()))
-                .hasPathSatisfying("data.difficulty", v -> v.assertThat().isEqualTo(response.difficulty()))
-                .hasPathSatisfying("data.categoryTopicName", v -> v.assertThat().isEqualTo(response.categoryTopicName()))
-                .hasPathSatisfying("data.isSolved", v -> v.assertThat().isEqualTo(response.isSolved()));
+                .hasPathSatisfying("data[0].id", v -> v.assertThat().isEqualTo(response.id().intValue()))
+                .hasPathSatisfying("data[0].title", v -> v.assertThat().isEqualTo(response.title()))
+                .hasPathSatisfying("data[0].description", v -> v.assertThat().isEqualTo(response.description()))
+                .hasPathSatisfying("data[0].difficulty", v -> v.assertThat().isEqualTo(response.difficulty()))
+                .hasPathSatisfying("data[0].categoryTopicName", v -> v.assertThat().isEqualTo(response.categoryTopicName()))
+                .hasPathSatisfying("data[0].isSolved", v -> v.assertThat().isEqualTo(response.isSolved()));
     }
 
     @TestMember
@@ -155,7 +156,7 @@ class DailyProblemControllerTest extends ControllerTestSupport {
                 .isSolved(false)
                 .build();
 
-        given(dailyProblemService.findDailyProblem(any(LocalDate.class), anyLong())).willReturn(response);
+        given(dailyProblemService.findDailyProblems(any(LocalDate.class), anyLong())).willReturn(List.of(response));
 
         // when & then
         assertThat(mvcTester.get().uri("/v1/daily-problem")
@@ -164,11 +165,46 @@ class DailyProblemControllerTest extends ControllerTestSupport {
                 .apply(print())
                 .hasStatusOk()
                 .bodyJson()
-                .hasPathSatisfying("data.id", v -> v.assertThat().isEqualTo(response.id().intValue()))
-                .hasPathSatisfying("data.difficulty", v -> v.assertThat().isEqualTo(response.difficulty()))
-                .hasPathSatisfying("data.categoryTopic", v -> v.assertThat().isEqualTo(response.categoryTopic()))
-                .hasPathSatisfying("data.title", v -> v.assertThat().isEqualTo(response.title()))
-                .hasPathSatisfying("data.isSolved", v -> v.assertThat().isEqualTo(false));
+                .hasPathSatisfying("data[0].id", v -> v.assertThat().isEqualTo(response.id().intValue()))
+                .hasPathSatisfying("data[0].difficulty", v -> v.assertThat().isEqualTo(response.difficulty()))
+                .hasPathSatisfying("data[0].categoryTopic", v -> v.assertThat().isEqualTo(response.categoryTopic()))
+                .hasPathSatisfying("data[0].title", v -> v.assertThat().isEqualTo(response.title()))
+                .hasPathSatisfying("data[0].isSolved", v -> v.assertThat().isEqualTo(false));
+    }
+
+    @TestMember
+    @Test
+    void 여러_카테고리의_문제를_날짜로_조회한다() {
+        // given
+        DailyProblemResponse javaResponse = DailyProblemResponse.builder()
+                .id(1L)
+                .difficulty(ProblemDifficulty.MEDIUM.name())
+                .categoryTopic("Java")
+                .title("Java의 equals와 hashCode")
+                .isSolved(false)
+                .build();
+        DailyProblemResponse springResponse = DailyProblemResponse.builder()
+                .id(2L)
+                .difficulty(ProblemDifficulty.EASY.name())
+                .categoryTopic("Spring")
+                .title("Spring IOC/DI")
+                .isSolved(true)
+                .build();
+
+        given(dailyProblemService.findDailyProblems(any(LocalDate.class), anyLong()))
+                .willReturn(List.of(javaResponse, springResponse));
+
+        // when & then
+        assertThat(mvcTester.get().uri("/v1/daily-problem")
+                .param("date", LocalDate.now().toString())
+                .contentType(MediaType.APPLICATION_JSON))
+                .apply(print())
+                .hasStatusOk()
+                .bodyJson()
+                .hasPathSatisfying("data[0].id", v -> v.assertThat().isEqualTo(javaResponse.id().intValue()))
+                .hasPathSatisfying("data[0].categoryTopic", v -> v.assertThat().isEqualTo(javaResponse.categoryTopic()))
+                .hasPathSatisfying("data[1].id", v -> v.assertThat().isEqualTo(springResponse.id().intValue()))
+                .hasPathSatisfying("data[1].categoryTopic", v -> v.assertThat().isEqualTo(springResponse.categoryTopic()));
     }
 
 }

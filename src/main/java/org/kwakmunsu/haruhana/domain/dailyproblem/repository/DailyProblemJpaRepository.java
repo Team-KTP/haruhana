@@ -23,7 +23,7 @@ public interface DailyProblemJpaRepository extends JpaRepository<DailyProblem, L
               AND dp.status = :status
             """
     )
-    Optional<DailyProblem> findByMemberIdAndAssignedAtAndStatus(
+    List<DailyProblem> findAllByMemberIdAndAssignedAtAndStatus(
             @Param("memberId") Long memberId,
             @Param("assignedAt") LocalDate assignedAt,
             @Param("status") EntityStatus status

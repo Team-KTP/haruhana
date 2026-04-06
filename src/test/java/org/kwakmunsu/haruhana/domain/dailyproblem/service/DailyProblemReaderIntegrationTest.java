@@ -53,12 +53,38 @@ class DailyProblemReaderIntegrationTest extends IntegrationTestSupport {
         dailyProblemJpaRepository.save(dailyProblem);
 
         // when
-        var dailyProblemOptional = dailyProblemReader.findDailyProblem(dailyProblem.getAssignedAt(), member.getId());
+        var result = dailyProblemReader.findDailyProblems(dailyProblem.getAssignedAt(), member.getId());
 
         // then
-        assertThat(dailyProblemOptional).isPresent();
-        var foundDailyProblem = dailyProblemOptional.get();
-        assertThat(foundDailyProblem.getId()).isEqualTo(dailyProblem.getId());
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().getId()).isEqualTo(dailyProblem.getId());
+    }
+
+    @Test
+    void 해당날짜에_회원에게_여러_카테고리_문제가_할당된_경우_모두_조회된다() {
+        // given
+        var member = MemberFixture.createMemberWithOutId("loginId", "nickname");
+        memberJpaRepository.save(member);
+
+        var springTopic = categoryTopicJpaRepository.findByName("Spring").orElseThrow();
+
+        var javaProblem = ProblemFixture.createProblem("Java 문제", "Java 설명", categoryTopic, ProblemDifficulty.MEDIUM);
+        var springProblem = ProblemFixture.createProblem("Spring 문제", "Spring 설명", springTopic, ProblemDifficulty.EASY);
+        problemJpaRepository.save(javaProblem);
+        problemJpaRepository.save(springProblem);
+
+        var javaDailyProblem = DailyProblem.create(member, javaProblem, LocalDate.now());
+        var springDailyProblem = DailyProblem.create(member, springProblem, LocalDate.now());
+        dailyProblemJpaRepository.save(javaDailyProblem);
+        dailyProblemJpaRepository.save(springDailyProblem);
+
+        // when
+        var result = dailyProblemReader.findDailyProblems(LocalDate.now(), member.getId());
+
+        // then
+        assertThat(result).hasSize(2);
+        assertThat(result).extracting(dp -> dp.getProblem().getCategoryTopic().getName())
+                .containsExactlyInAnyOrder("Java", "Spring");
     }
 
     @Test
@@ -75,10 +101,10 @@ class DailyProblemReaderIntegrationTest extends IntegrationTestSupport {
 
         // when
         LocalDate notExistsDailyProblemDate = LocalDate.now().plusDays(4);
-        var dailyProblemOptional = dailyProblemReader.findDailyProblem(notExistsDailyProblemDate, member.getId());
+        var result = dailyProblemReader.findDailyProblems(notExistsDailyProblemDate, member.getId());
 
         // then
-        assertThat(dailyProblemOptional).isEmpty();
+        assertThat(result).isEmpty();
     }
 
     @Test
@@ -95,10 +121,10 @@ class DailyProblemReaderIntegrationTest extends IntegrationTestSupport {
 
         // when
         Long anotherMemberId = member.getId() + 1;
-        var dailyProblemOptional = dailyProblemReader.findDailyProblem(dailyProblem.getAssignedAt(), anotherMemberId);
+        var result = dailyProblemReader.findDailyProblems(dailyProblem.getAssignedAt(), anotherMemberId);
 
         // then
-        assertThat(dailyProblemOptional).isEmpty();
+        assertThat(result).isEmpty();
     }
 
     @Test
@@ -114,12 +140,11 @@ class DailyProblemReaderIntegrationTest extends IntegrationTestSupport {
         dailyProblemJpaRepository.save(dailyProblem);
 
         // when
-        var dailyProblemOptional = dailyProblemReader.findDailyProblem(null, member.getId());
+        var result = dailyProblemReader.findDailyProblems(null, member.getId());
 
         // then
-        assertThat(dailyProblemOptional).isPresent();
-        var foundDailyProblem = dailyProblemOptional.get();
-        assertThat(foundDailyProblem.getId()).isEqualTo(dailyProblem.getId());
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().getId()).isEqualTo(dailyProblem.getId());
     }
 
 }
