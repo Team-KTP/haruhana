@@ -19,6 +19,7 @@ import org.kwakmunsu.haruhana.domain.problem.service.dto.ProblemResponse;
 import org.kwakmunsu.haruhana.global.entity.EntityStatus;
 import org.kwakmunsu.haruhana.global.support.error.ErrorType;
 import org.kwakmunsu.haruhana.global.support.error.HaruHanaException;
+import org.kwakmunsu.haruhana.global.support.notification.ErrorNotificationSender;
 import org.kwakmunsu.haruhana.infrastructure.gemini.ChatService;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -38,6 +39,7 @@ public class ProblemGenerator {
     private final ChatService chatService;
     private final ProblemJpaRepository problemJpaRepository;
     private final DailyProblemManager dailyProblemManager;
+    private final ErrorNotificationSender errorNotificationSender;
 
     @Transactional
     public void generateProblem(LocalDate targetDate) {
@@ -69,6 +71,11 @@ public class ProblemGenerator {
                     );
                 } catch (Exception backupEx) {
                     log.error("[ProblemGenerator] 백업 문제 할당도 실패 - 카테고리: {}, 난이도: {}", group.key().categoryTopicName(), group.key().difficulty(), backupEx);
+                    String message = String.format(
+                            "[ProblemGenerator] 문제 생성 및 백업 할당 모두 실패 - 카테고리: %s, 난이도: %s",
+                            group.key().categoryTopicName(), group.key().difficulty()
+                    );
+                    errorNotificationSender.sendErrorNotification(message, backupEx);
                 }
             }
         }
