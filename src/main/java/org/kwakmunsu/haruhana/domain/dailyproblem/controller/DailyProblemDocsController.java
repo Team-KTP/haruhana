@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.LocalDate;
+import java.util.List;
 import org.kwakmunsu.haruhana.domain.dailyproblem.controller.dto.SubmitSolutionRequest;
 import org.kwakmunsu.haruhana.domain.dailyproblem.service.dto.response.DailyProblemDetailResponse;
 import org.kwakmunsu.haruhana.domain.dailyproblem.service.dto.response.DailyProblemResponse;
@@ -31,7 +32,7 @@ public abstract class DailyProblemDocsController {
             ErrorType.UNAUTHORIZED_ERROR,
             ErrorType.DEFAULT_ERROR
     })
-    public abstract ResponseEntity<ApiResponse<TodayProblemResponse>> getTodayProblem(Long memberId);
+    public abstract ResponseEntity<ApiResponse<List<TodayProblemResponse>>> getTodayProblem(Long memberId);
 
     @Operation(
             summary = "날짜에 해당하는 회원에게 할당된 데일리 문제 미리보기 조회 - JWT [O]",
@@ -46,7 +47,7 @@ public abstract class DailyProblemDocsController {
             ErrorType.UNAUTHORIZED_ERROR,
             ErrorType.DEFAULT_ERROR
     })
-    public abstract ResponseEntity<ApiResponse<DailyProblemResponse>> findDailyProblem(
+    public abstract ResponseEntity<ApiResponse<List<DailyProblemResponse>>> findDailyProblems(
             LocalDate date,
             Long memberId
     );

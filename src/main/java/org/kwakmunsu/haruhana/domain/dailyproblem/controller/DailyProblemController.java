@@ -2,6 +2,7 @@ package org.kwakmunsu.haruhana.domain.dailyproblem.controller;
 
 import jakarta.validation.Valid;
 import java.time.LocalDate;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.kwakmunsu.haruhana.domain.dailyproblem.controller.dto.SubmitSolutionRequest;
 import org.kwakmunsu.haruhana.domain.dailyproblem.service.DailyProblemService;
@@ -30,21 +31,21 @@ public class DailyProblemController extends DailyProblemDocsController {
 
     @Override
     @GetMapping("/v1/daily-problem/today")
-    public ResponseEntity<ApiResponse<TodayProblemResponse>> getTodayProblem(@LoginMember Long memberId) {
-        TodayProblemResponse response = dailyProblemService.getTodayProblem(memberId);
+    public ResponseEntity<ApiResponse<List<TodayProblemResponse>>> getTodayProblem(@LoginMember Long memberId) {
+        List<TodayProblemResponse> response = dailyProblemService.getTodayProblem(memberId);
 
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @Override
     @GetMapping("/v1/daily-problem")
-    public ResponseEntity<ApiResponse<DailyProblemResponse>> findDailyProblem(
+    public ResponseEntity<ApiResponse<List<DailyProblemResponse>>> findDailyProblems(
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
             LocalDate date,
             @LoginMember Long memberId
     ) {
-        DailyProblemResponse response = dailyProblemService.findDailyProblem(date, memberId);
+        List<DailyProblemResponse> response = dailyProblemService.findDailyProblems(date, memberId);
 
         return ResponseEntity.ok(ApiResponse.success(response));
     }

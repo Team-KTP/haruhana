@@ -1,7 +1,7 @@
 package org.kwakmunsu.haruhana.domain.dailyproblem.service;
 
 import java.time.LocalDate;
-import java.util.Optional;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.kwakmunsu.haruhana.domain.dailyproblem.entity.DailyProblem;
@@ -28,11 +28,13 @@ public class DailyProblemService {
      * @param memberId 회원 ID
      */
     @Cacheable(cacheNames = "todayProblem", key = "#memberId + ':' + T(java.time.LocalDate).now()")
-    public TodayProblemResponse getTodayProblem(Long memberId) {
+    public List<TodayProblemResponse> getTodayProblem(Long memberId) {
         log.debug("[DailyProblemService] 오늘의 문제 캐시 미스 - 조회 시작");
-        DailyProblem dailyProblem = dailyProblemReader.findDailyProblemByMember(memberId);
+        List<DailyProblem> dailyProblems = dailyProblemReader.findDailyProblemsByMember(memberId);
 
-        return TodayProblemResponse.from(dailyProblem);
+        return dailyProblems.stream()
+                .map(TodayProblemResponse::from)
+                .toList();
     }
 
     /**
@@ -60,15 +62,12 @@ public class DailyProblemService {
      * @param memberId 회원 ID returns DailyProblemResponse 데일리 문제 미리보기 응답 DTO
      *
      */
-    public DailyProblemResponse findDailyProblem(LocalDate date, Long memberId) {
-        Optional<DailyProblem> dailyProblem = dailyProblemReader.findDailyProblem(date, memberId);
+    public List<DailyProblemResponse> findDailyProblems(LocalDate date, Long memberId) {
+        List<DailyProblem> dailyProblems = dailyProblemReader.findDailyProblems(date, memberId);
 
-        if (dailyProblem.isEmpty()) {
-            log.debug("[DailyProblemService] 해당 날짜의 문제 없음 - date={}", date);
-            return DailyProblemResponse.builder().build();
-        }
-
-        return DailyProblemResponse.from(dailyProblem.get());
+        return dailyProblems.stream()
+                .map(DailyProblemResponse::from)
+                .toList();
     }
 
 }

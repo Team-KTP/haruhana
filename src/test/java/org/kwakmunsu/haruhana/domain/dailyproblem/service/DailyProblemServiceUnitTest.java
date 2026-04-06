@@ -8,6 +8,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.kwakmunsu.haruhana.UnitTestSupport;
@@ -47,13 +48,14 @@ class DailyProblemServiceUnitTest extends UnitTestSupport {
         var problem = ProblemFixture.createProblem(categoryTopic);
         var dailyProblem = DailyProblemFixture.createUnsolvedDailyProblem(1L, member, problem);
 
-        given(dailyProblemReader.findDailyProblemByMember(memberId)).willReturn(dailyProblem);
+        given(dailyProblemReader.findDailyProblemsByMember(memberId)).willReturn(List.of(dailyProblem));
 
         // when
-        var response = dailyProblemService.getTodayProblem(memberId);
+        var responses = dailyProblemService.getTodayProblem(memberId);
 
         // then
-        assertThat(response).isNotNull().extracting(
+        assertThat(responses).hasSize(1);
+        assertThat(responses.getFirst()).extracting(
                 TodayProblemResponse::id,
                 TodayProblemResponse::title,
                 TodayProblemResponse::description,
@@ -69,21 +71,42 @@ class DailyProblemServiceUnitTest extends UnitTestSupport {
                 false
         );
 
-        verify(dailyProblemReader, times(1)).findDailyProblemByMember(memberId);
+        verify(dailyProblemReader, times(1)).findDailyProblemsByMember(memberId);
     }
 
     @Test
-    void 오늘의_문제가_없으면_예외를_발생시킨다() {
+    void 오늘의_문제가_여러_카테고리인_경우_모두_반환한다() {
+        // given
+        var memberId = 1L;
+        var member = MemberFixture.createMember(Role.ROLE_MEMBER);
+        var javaDailyProblem = DailyProblemFixture.createUnsolvedDailyProblem(1L, member,
+                ProblemFixture.createProblem(CategoryTopicFixture.createCategoryTopic()));
+        var springDailyProblem = DailyProblemFixture.createUnsolvedDailyProblem(2L, member,
+                ProblemFixture.createProblem(2L, CategoryTopic.create(2L, "Spring")));
+
+        given(dailyProblemReader.findDailyProblemsByMember(memberId))
+                .willReturn(List.of(javaDailyProblem, springDailyProblem));
+
+        // when
+        var responses = dailyProblemService.getTodayProblem(memberId);
+
+        // then
+        assertThat(responses).hasSize(2);
+        assertThat(responses).extracting(TodayProblemResponse::id).containsExactly(1L, 2L);
+    }
+
+    @Test
+    void 오늘의_문제가_없으면_빈_리스트를_반환한다() {
         // given
         var memberId = 1L;
 
-        given(dailyProblemReader.findDailyProblemByMember(memberId))
-                .willThrow(new HaruHanaException(ErrorType.NOT_FOUND_DAILY_PROBLEM));
+        given(dailyProblemReader.findDailyProblemsByMember(memberId)).willReturn(List.of());
 
-        // when & then
-        assertThatThrownBy(() -> dailyProblemService.getTodayProblem(memberId))
-                .isInstanceOf(HaruHanaException.class)
-                .hasMessage(ErrorType.NOT_FOUND_DAILY_PROBLEM.getMessage());
+        // when
+        var responses = dailyProblemService.getTodayProblem(memberId);
+
+        // then
+        assertThat(responses).isEmpty();
     }
 
     @Test
@@ -176,18 +199,20 @@ class DailyProblemServiceUnitTest extends UnitTestSupport {
     @Test
     void 날짜에_해당하는_할당된_문제를_조회한다() {
         // given
+        var member = MemberFixture.createMember(Role.ROLE_MEMBER);
         var dailyProblem = DailyProblemFixture.createDailyProblem(
-                MemberFixture.createMember(Role.ROLE_MEMBER),
+                member,
                 ProblemFixture.createProblem(CategoryTopic.create(1L, "Java"))
         );
 
-        given(dailyProblemReader.findDailyProblem(any(), any())).willReturn(Optional.of(dailyProblem));
+        given(dailyProblemReader.findDailyProblems(any(), any())).willReturn(List.of(dailyProblem));
 
         // when
-        var response = dailyProblemService.findDailyProblem(dailyProblem.getAssignedAt(), 1L);
+        var responses = dailyProblemService.findDailyProblems(dailyProblem.getAssignedAt(), 1L);
 
         // then
-        assertThat(response).isNotNull().extracting(
+        assertThat(responses).hasSize(1);
+        assertThat(responses.getFirst()).extracting(
                 DailyProblemResponse::id,
                 DailyProblemResponse::difficulty,
                 DailyProblemResponse::categoryTopic,
@@ -203,27 +228,35 @@ class DailyProblemServiceUnitTest extends UnitTestSupport {
     }
 
     @Test
-    void 날짜에_해당된_문제가_없다() {
+    void 날짜에_여러_카테고리_문제가_있을_경우_모두_반환한다() {
         // given
-        given(dailyProblemReader.findDailyProblem(any(), any())).willReturn(Optional.empty());
+        var member = MemberFixture.createMember(Role.ROLE_MEMBER);
+        var dailyProblem1 = DailyProblemFixture.createDailyProblem(1L, member,
+                ProblemFixture.createProblem(CategoryTopic.create(1L, "Java")));
+        var dailyProblem2 = DailyProblemFixture.createDailyProblem(2L, member,
+                ProblemFixture.createProblem(2L, CategoryTopic.create(2L, "Spring")));
+
+        given(dailyProblemReader.findDailyProblems(any(), any())).willReturn(List.of(dailyProblem1, dailyProblem2));
 
         // when
-        var response = dailyProblemService.findDailyProblem(LocalDate.now(), 1L);
+        var responses = dailyProblemService.findDailyProblems(LocalDate.now(), 1L);
 
         // then
-        assertThat(response).isNotNull().extracting(
-                DailyProblemResponse::id,
-                DailyProblemResponse::difficulty,
-                DailyProblemResponse::categoryTopic,
-                DailyProblemResponse::title,
-                DailyProblemResponse::isSolved
-        ).containsExactly(
-                null,
-                null,
-                null,
-                null,
-                false
-        );
+        assertThat(responses).hasSize(2);
+        assertThat(responses).extracting(DailyProblemResponse::id)
+                .containsExactly(dailyProblem1.getId(), dailyProblem2.getId());
+    }
+
+    @Test
+    void 날짜에_해당된_문제가_없다() {
+        // given
+        given(dailyProblemReader.findDailyProblems(any(), any())).willReturn(List.of());
+
+        // when
+        var responses = dailyProblemService.findDailyProblems(LocalDate.now(), 1L);
+
+        // then
+        assertThat(responses).isEmpty();
     }
 
 }

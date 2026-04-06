@@ -7,6 +7,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -71,14 +72,14 @@ class DailyProblemCacheTest extends IntegrationTestSupport {
         var problem = ProblemFixture.createProblem(CategoryTopicFixture.createCategoryTopic());
         var dailyProblem = DailyProblemFixture.createUnsolvedDailyProblem(1L, member, problem);
 
-        given(dailyProblemReader.findDailyProblemByMember(memberId)).willReturn(dailyProblem);
+        given(dailyProblemReader.findDailyProblemsByMember(memberId)).willReturn(List.of(dailyProblem));
 
         // when: 동일 회원으로 2번 조회
         dailyProblemService.getTodayProblem(memberId);
         dailyProblemService.getTodayProblem(memberId);
 
         // then: DB는 1번만 호출
-        verify(dailyProblemReader, times(1)).findDailyProblemByMember(memberId);
+        verify(dailyProblemReader, times(1)).findDailyProblemsByMember(memberId);
     }
 
     @Test
@@ -89,7 +90,7 @@ class DailyProblemCacheTest extends IntegrationTestSupport {
         var problem = ProblemFixture.createProblem(CategoryTopicFixture.createCategoryTopic());
         var dailyProblem = DailyProblemFixture.createUnsolvedDailyProblem(1L, member, problem);
 
-        given(dailyProblemReader.findDailyProblemByMember(memberId)).willReturn(dailyProblem);
+        given(dailyProblemReader.findDailyProblemsByMember(memberId)).willReturn(List.of(dailyProblem));
 
         // when
         dailyProblemService.getTodayProblem(memberId);
@@ -107,10 +108,10 @@ class DailyProblemCacheTest extends IntegrationTestSupport {
         var member = MemberFixture.createMember(Role.ROLE_MEMBER);
         var problem = ProblemFixture.createProblem(CategoryTopicFixture.createCategoryTopic());
 
-        given(dailyProblemReader.findDailyProblemByMember(memberIdA))
-                .willReturn(DailyProblemFixture.createUnsolvedDailyProblem(1L, member, problem));
-        given(dailyProblemReader.findDailyProblemByMember(memberIdB))
-                .willReturn(DailyProblemFixture.createUnsolvedDailyProblem(2L, member, problem));
+        given(dailyProblemReader.findDailyProblemsByMember(memberIdA))
+                .willReturn(List.of(DailyProblemFixture.createUnsolvedDailyProblem(1L, member, problem)));
+        given(dailyProblemReader.findDailyProblemsByMember(memberIdB))
+                .willReturn(List.of(DailyProblemFixture.createUnsolvedDailyProblem(2L, member, problem)));
 
         // when: 각각 2번씩 조회
         dailyProblemService.getTodayProblem(memberIdA);
@@ -119,8 +120,8 @@ class DailyProblemCacheTest extends IntegrationTestSupport {
         dailyProblemService.getTodayProblem(memberIdB);
 
         // then: 각 회원마다 DB는 1번씩만 호출
-        verify(dailyProblemReader, times(1)).findDailyProblemByMember(memberIdA);
-        verify(dailyProblemReader, times(1)).findDailyProblemByMember(memberIdB);
+        verify(dailyProblemReader, times(1)).findDailyProblemsByMember(memberIdA);
+        verify(dailyProblemReader, times(1)).findDailyProblemsByMember(memberIdB);
     }
 
     @Test
@@ -132,7 +133,7 @@ class DailyProblemCacheTest extends IntegrationTestSupport {
         var problem = ProblemFixture.createProblem(CategoryTopicFixture.createCategoryTopic());
         var dailyProblem = DailyProblemFixture.createUnsolvedDailyProblem(dailyProblemId, member, problem);
 
-        given(dailyProblemReader.findDailyProblemByMember(memberId)).willReturn(dailyProblem);
+        given(dailyProblemReader.findDailyProblemsByMember(memberId)).willReturn(List.of(dailyProblem));
         dailyProblemService.getTodayProblem(memberId);
 
         var cache = cacheManager.getCache("todayProblem");
@@ -151,7 +152,7 @@ class DailyProblemCacheTest extends IntegrationTestSupport {
 
         // then: 재조회 시 DB 재호출
         dailyProblemService.getTodayProblem(memberId);
-        verify(dailyProblemReader, times(2)).findDailyProblemByMember(memberId);
+        verify(dailyProblemReader, times(2)).findDailyProblemsByMember(memberId);
     }
 
     // ──────────────────────────────────────────────────────────────
