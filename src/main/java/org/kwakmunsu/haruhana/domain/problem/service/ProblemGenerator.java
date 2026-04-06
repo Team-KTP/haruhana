@@ -19,6 +19,7 @@ import org.kwakmunsu.haruhana.domain.problem.service.dto.ProblemResponse;
 import org.kwakmunsu.haruhana.global.entity.EntityStatus;
 import org.kwakmunsu.haruhana.global.support.error.ErrorType;
 import org.kwakmunsu.haruhana.global.support.error.HaruHanaException;
+import org.kwakmunsu.haruhana.global.support.notification.ErrorNotificationSender;
 import org.kwakmunsu.haruhana.infrastructure.gemini.ChatService;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -38,6 +39,7 @@ public class ProblemGenerator {
     private final ChatService chatService;
     private final ProblemJpaRepository problemJpaRepository;
     private final DailyProblemManager dailyProblemManager;
+    private final ErrorNotificationSender errorNotificationSender;
 
     @Transactional
     public void generateProblem(LocalDate targetDate) {
@@ -57,7 +59,8 @@ public class ProblemGenerator {
                 Problem problem = generateAndSaveProblem(group, targetDate);
                 dailyProblemManager.assignDailyProblemToMembers(problem, group.members(), targetDate);
             } catch (Exception e) {
-                log.error("[ProblemGenerator] 문제 생성 실패 - 카테고리: {}, 난이도: {}", group.key().categoryTopicName(), group.key().difficulty(), e);
+                log.error("[ProblemGenerator] 문제 생성 실패 - 카테고리: {}, 난이도: {}", group.key().categoryTopicName(),
+                        group.key().difficulty(), e);
 
                 try {
                     assignBackupProblem(
@@ -68,7 +71,15 @@ public class ProblemGenerator {
                             targetDate
                     );
                 } catch (Exception backupEx) {
-                    log.error("[ProblemGenerator] 백업 문제 할당도 실패 - 카테고리: {}, 난이도: {}", group.key().categoryTopicName(), group.key().difficulty(), backupEx);
+                    log.error("[ProblemGenerator] 백업 문제 할당도 실패 - 카테고리: {}, 난이도: {}", group.key().categoryTopicName(),
+                            group.key().difficulty(), backupEx);
+                    String message = String.format(
+                            "[ProblemGenerator] 문제 생성 및 백업 할당 모두 실패 - 카테고리: %s, 난이도: %s",
+                            group.key().categoryTopicName(), group.key().difficulty()
+                    );
+                    RuntimeException notificationEx = new RuntimeException(message, backupEx);
+                    notificationEx.addSuppressed(e); // 1차 실패 원인 보존
+                    errorNotificationSender.sendErrorNotification(message, notificationEx);
                 }
             }
         }
@@ -194,11 +205,12 @@ public class ProblemGenerator {
     ) {
         problemJpaRepository.findLeastRecentlyAssignedProblem(categoryTopicId, difficulty, EntityStatus.ACTIVE)
                 .ifPresentOrElse(backup -> {
-                    dailyProblemManager.assignDailyProblemToMembers(backup, members, targetDate);
-                    log.info("[ProblemGenerator] 백업 문제 할당 완료 - 카테고리: {}, 난이도: {}, 회원 수: {}", categoryTopicName, difficulty, members.size());
-                },
-                () -> log.warn("[ProblemGenerator] 백업 문제 없음, 할당 생략 - 카테고리: {}, 난이도: {}", categoryTopicName, difficulty)
-        );
+                            dailyProblemManager.assignDailyProblemToMembers(backup, members, targetDate);
+                            log.info("[ProblemGenerator] 백업 문제 할당 완료 - 카테고리: {}, 난이도: {}, 회원 수: {}", categoryTopicName, difficulty,
+                                    members.size());
+                        },
+                        () -> log.warn("[ProblemGenerator] 백업 문제 없음, 할당 생략 - 카테고리: {}, 난이도: {}", categoryTopicName, difficulty)
+                );
     }
 
     private void validateProblemResponse(ProblemResponse problemResponse) {
