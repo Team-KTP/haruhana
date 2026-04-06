@@ -49,7 +49,7 @@ public class MemberService {
         Member member = memberManager.create(newProfile);
         MemberPreference memberPreference = memberManager.registerPreference(member, newPreference);
         streakManager.create(member);
-        // 오늘의 문제 문제 직접 생성 - Async 처리
+        // 회원가입 시에만 오늘의 문제 문제 직접 생성 - Async 처리
         problemGenerator.generateInitialProblem(member, memberPreference.getCategoryTopic(), memberPreference.getDifficulty());
 
         log.info("[MemberService] 회원 생성 및 학습 정보 등록 :{}, category: {}, difficulty: {}",
