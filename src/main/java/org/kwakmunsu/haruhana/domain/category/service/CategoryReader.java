@@ -33,7 +33,7 @@ public class CategoryReader {
 
     @Transactional(readOnly = true)
     public CategoryListResponse getCategories() {
-        List<Category> categories = categoryJpaRepository.findAll();
+        List<Category> categories = categoryJpaRepository.findAllByStatus(EntityStatus.ACTIVE);
 
         List<CategoryResponse> categoryResponses = categories.stream()
                 .map(this::buildCategoryResponse)
@@ -43,7 +43,7 @@ public class CategoryReader {
     }
 
     private CategoryResponse buildCategoryResponse(Category category) {
-        List<CategoryGroup> categoryGroups = categoryGroupJpaRepository.findByCategoryId(category.getId());
+        List<CategoryGroup> categoryGroups = categoryGroupJpaRepository.findByCategoryIdAndStatus(category.getId(), EntityStatus.ACTIVE);
 
         List<CategoryGroupResponse> groupResponses = categoryGroups.stream()
                 .map(this::buildCategoryGroupResponse)
@@ -53,7 +53,7 @@ public class CategoryReader {
     }
 
     private CategoryGroupResponse buildCategoryGroupResponse(CategoryGroup categoryGroup) {
-        List<CategoryTopic> categoryTopics = categoryTopicJpaRepository.findByGroupId(categoryGroup.getId());
+        List<CategoryTopic> categoryTopics = categoryTopicJpaRepository.findByGroupIdAndStatus(categoryGroup.getId(), EntityStatus.ACTIVE);
 
         List<CategoryTopicResponse> topicResponses = categoryTopics.stream()
                 .map(CategoryTopicResponse::from)
