@@ -95,7 +95,7 @@ public class ProblemGenerator {
      */
     @Async
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    @CacheEvict(cacheNames = "todayProblem", key = "#memberId + ':' + T(java.time.LocalDate).now()")
+    @CacheEvict(cacheNames = "todayProblem", key = "#member.id + ':' + T(java.time.LocalDate).now()")
     public void generateInitialProblem(Member member, CategoryTopic categoryTopic, ProblemDifficulty difficulty) {
         LocalDate today = LocalDate.now();
         try {
