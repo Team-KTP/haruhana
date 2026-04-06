@@ -21,6 +21,7 @@ import org.kwakmunsu.haruhana.global.support.error.ErrorType;
 import org.kwakmunsu.haruhana.global.support.error.HaruHanaException;
 import org.kwakmunsu.haruhana.global.support.notification.ErrorNotificationSender;
 import org.kwakmunsu.haruhana.infrastructure.gemini.ChatService;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -88,12 +89,13 @@ public class ProblemGenerator {
     /**
      * 회원의 첫 문제를 생성하고 할당
      *
-     * @param member        회원가입 한 첫 회원
+     * @param member        회원
      * @param categoryTopic 카테고리 주제
      * @param difficulty    난이도
      */
     @Async
     @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @CacheEvict(cacheNames = "todayProblem", key = "#member.id + ':' + T(java.time.LocalDate).now()")
     public void generateInitialProblem(Member member, CategoryTopic categoryTopic, ProblemDifficulty difficulty) {
         LocalDate today = LocalDate.now();
         try {
