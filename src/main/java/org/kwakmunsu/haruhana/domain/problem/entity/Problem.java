@@ -6,6 +6,7 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import java.time.LocalDate;
 import lombok.AccessLevel;
@@ -26,7 +27,8 @@ public class Problem extends BaseEntity {
     @Column(nullable = false)
     private String description;
 
-    @Column(nullable = false, length = 5000)
+    @Lob
+    @Column(nullable = false)
     private String aiAnswer;
 
     @ManyToOne(fetch = FetchType.LAZY)
