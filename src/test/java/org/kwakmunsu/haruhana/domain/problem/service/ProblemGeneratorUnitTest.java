@@ -28,6 +28,7 @@ import org.kwakmunsu.haruhana.global.support.notification.ErrorNotificationSende
 import org.kwakmunsu.haruhana.infrastructure.gemini.ChatService;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.springframework.cache.CacheManager;
 import org.springframework.test.util.ReflectionTestUtils;
 
 class ProblemGeneratorUnitTest extends UnitTestSupport {
@@ -46,6 +47,9 @@ class ProblemGeneratorUnitTest extends UnitTestSupport {
 
     @Mock
     ErrorNotificationSender errorNotificationSender;
+
+    @Mock
+    CacheManager cacheManager;
 
     @InjectMocks
     ProblemGenerator problemGenerator;

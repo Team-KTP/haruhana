@@ -2,6 +2,7 @@ package org.kwakmunsu.haruhana.domain.problem.service;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,11 +22,13 @@ import org.kwakmunsu.haruhana.global.support.error.ErrorType;
 import org.kwakmunsu.haruhana.global.support.error.HaruHanaException;
 import org.kwakmunsu.haruhana.global.support.notification.ErrorNotificationSender;
 import org.kwakmunsu.haruhana.infrastructure.gemini.ChatService;
-import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.CacheManager;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -41,6 +44,7 @@ public class ProblemGenerator {
     private final ProblemJpaRepository problemJpaRepository;
     private final DailyProblemManager dailyProblemManager;
     private final ErrorNotificationSender errorNotificationSender;
+    private final CacheManager cacheManager;
 
     @Transactional
     public void generateProblem(LocalDate targetDate) {
@@ -88,6 +92,7 @@ public class ProblemGenerator {
 
     /**
      * 회원의 첫 문제를 생성하고 할당
+     * 트랜잭션 커밋 이후에 todayProblem 캐시를 무효화하여 동시성 이슈를 방지합니다.
      *
      * @param member        회원
      * @param categoryTopic 카테고리 주제
@@ -95,7 +100,6 @@ public class ProblemGenerator {
      */
     @Async
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    @CacheEvict(cacheNames = "todayProblem", key = "#member.id + ':' + T(java.time.LocalDate).now()")
     public void generateInitialProblem(Member member, CategoryTopic categoryTopic, ProblemDifficulty difficulty) {
         LocalDate today = LocalDate.now();
         try {
@@ -114,6 +118,9 @@ public class ProblemGenerator {
             // 기존 메서드 사용 할려고 그냥 List로 감싸서 보냄
             dailyProblemManager.assignDailyProblemToMembers(problem, List.of(member), today);
 
+            // 트랜잭션 커밋 이후에 캐시 무효화를 보장
+            registerCacheEvictionAfterCommit(member.getId(), today);
+
             log.info("[ProblemGenerator] 첫 문제 생성 완료 - 카테고리: {}, 난이도: {}, 대상 회원: {}",
                     categoryTopic.getName(),
                     difficulty,
@@ -124,6 +131,23 @@ public class ProblemGenerator {
 
             assignBackupProblem(categoryTopic.getId(), categoryTopic.getName(), difficulty, List.of(member), today);
         }
+    }
+
+    /**
+     * 트랜잭션 커밋 후 todayProblem 캐시 무효화
+     */
+    private void registerCacheEvictionAfterCommit(Long memberId, LocalDate date) {
+        TransactionSynchronizationManager.registerSynchronization(
+            new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    String cacheKey = memberId + ":" + date;
+                    Objects.requireNonNull(cacheManager.getCache("todayProblem")).evict(cacheKey);
+
+                    log.debug("[ProblemGenerator] todayProblem 캐시 무효화 - memberId: {}, date: {}", memberId, date);
+                }
+            }
+        );
     }
 
     /**

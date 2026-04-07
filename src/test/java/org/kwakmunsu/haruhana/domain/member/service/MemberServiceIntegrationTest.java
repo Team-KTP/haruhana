@@ -245,6 +245,8 @@ class MemberServiceIntegrationTest extends IntegrationTestSupport {
         // then
         var count = memberPreferenceJpaRepository.countByMemberIdAndStatus(memberId, org.kwakmunsu.haruhana.global.entity.EntityStatus.ACTIVE);
         assertThat(count).isEqualTo(2);
+        // 선호 정보 추가 시 비동기로 초기 문제 생성
+        verify(problemGenerator, times(2)).generateInitialProblem(any(), any(), any());
     }
 
     @Test
