@@ -21,11 +21,13 @@ import org.kwakmunsu.haruhana.domain.member.enums.Role;
 import org.kwakmunsu.haruhana.domain.problem.ProblemFixture;
 import org.kwakmunsu.haruhana.domain.streak.service.StreakManager;
 import org.kwakmunsu.haruhana.domain.submission.SubmissionFixture;
+import org.kwakmunsu.haruhana.domain.submission.service.FeedbackGradingService;
 import org.kwakmunsu.haruhana.domain.submission.service.SubmissionManager;
 import org.kwakmunsu.haruhana.domain.submission.service.SubmissionReader;
 import org.kwakmunsu.haruhana.domain.submission.service.SubmissionService;
 import org.kwakmunsu.haruhana.domain.submission.service.dto.response.SubmissionResult;
 import org.springframework.cache.CacheManager;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 /**
@@ -50,9 +52,18 @@ class DailyProblemCacheTest extends IntegrationTestSupport {
     @MockitoBean
     SubmissionManager submissionManager;
 
+    // 캐시 무효화 테스트 범위를 벗어나는 비동기 이벤트 체인을 차단
+    @MockitoBean
+    ApplicationEventPublisher eventPublisher;
+
     // 비동기 이벤트 핸들러(SubmissionEventHandler)가 DB에 접근하지 않도록 차단
     @MockitoBean
     StreakManager streakManager;
+
+    // @MockitoBean ApplicationEventPublisher는 ApplicationContext 자체가 주입될 수 있어
+    // 실제 이벤트가 발행될 수 있음 → FeedbackGradingService를 직접 차단
+    @MockitoBean
+    FeedbackGradingService feedbackGradingService;
 
     @AfterEach
     void clearCache() {
