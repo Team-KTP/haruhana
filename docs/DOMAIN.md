@@ -219,7 +219,6 @@
 - `strengths`     : 잘한 점 (TEXT 타입)
 - `weaknesses`    : 부족한 점 (TEXT 타입)
 - `suggestion`    : 개선 방향 (TEXT 타입)
-- `graded_at`     : 채점 완료 일시
 
 #### 규칙
 - 하나의 제출(SUBMISSION)에 여러 채점 결과가 존재할 수 있다. (최초 제출 + 수정 제출 각각 채점)
