@@ -167,6 +167,86 @@ class DailyProblemCacheTest extends IntegrationTestSupport {
     }
 
     // ──────────────────────────────────────────────────────────────
+    // generateInitialProblem 캐시 무효화 회귀 테스트
+    // ──────────────────────────────────────────────────────────────
+
+    @Test
+    void 오늘의_문제가_없을_때_empty_결과는_캐시에_저장되지_않는다() {
+        // given: DB에 문제 없음 (신규 회원 - 아직 문제 미생성 상태)
+        var memberId = 1L;
+        given(dailyProblemReader.findDailyProblemsByMember(memberId)).willReturn(List.of());
+
+        // when: 2번 연속 조회
+        dailyProblemService.getTodayProblem(memberId);
+        dailyProblemService.getTodayProblem(memberId);
+
+        // then: unless 조건으로 empty 결과는 캐시되지 않음 → DB 2번 호출
+        verify(dailyProblemReader, times(2)).findDailyProblemsByMember(memberId);
+        assertThat(
+                Objects.requireNonNull(cacheManager.getCache("todayProblem"))
+                        .get(memberId + ":" + LocalDate.now())
+        ).isNull();
+    }
+
+    @Test
+    void empty_캐시_상태에서_generateInitialProblem_커밋_후_무효화_시_신규_데이터를_반환한다() {
+        // given: 첫 조회 - 문제 없음, empty 결과는 캐시 저장 안됨
+        var memberId = 1L;
+        var cacheKey = memberId + ":" + LocalDate.now();
+        given(dailyProblemReader.findDailyProblemsByMember(memberId)).willReturn(List.of());
+        dailyProblemService.getTodayProblem(memberId);
+        assertThat(Objects.requireNonNull(cacheManager.getCache("todayProblem")).get(cacheKey)).isNull();
+
+        // when: generateInitialProblem afterCommit 에서 캐시 무효화 (empty 상태에서 evict는 no-op, 안전해야 함)
+        cacheManager.getCache("todayProblem").evict(cacheKey);
+
+        // DB에 문제 생성됨 (비동기 트랜잭션 커밋 완료 이후 상태)
+        var member = MemberFixture.createMember(Role.ROLE_MEMBER);
+        var problem = ProblemFixture.createProblem(CategoryTopicFixture.createCategoryTopic());
+        var newDailyProblem = DailyProblemFixture.createUnsolvedDailyProblem(1L, member, problem);
+        given(dailyProblemReader.findDailyProblemsByMember(memberId)).willReturn(List.of(newDailyProblem));
+
+        // when: 재조회
+        var result = dailyProblemService.getTodayProblem(memberId);
+
+        // then: stale empty가 아닌 신규 데이터 반환
+        assertThat(result).hasSize(1);
+        // then: DB 재호출 (empty 조회 1번 + 무효화 후 재조회 1번)
+        verify(dailyProblemReader, times(2)).findDailyProblemsByMember(memberId);
+    }
+
+    @Test
+    void stale_non_empty_캐시_상태에서_generateInitialProblem_커밋_후_무효화_시_신규_데이터를_반환한다() {
+        // given: 기존 1개 문제로 캐시 채우기 (stale non-empty 상태 재현)
+        var memberId = 1L;
+        var cacheKey = memberId + ":" + LocalDate.now();
+        var member = MemberFixture.createMember(Role.ROLE_MEMBER);
+        var problem = ProblemFixture.createProblem(CategoryTopicFixture.createCategoryTopic());
+        var existingDailyProblem = DailyProblemFixture.createUnsolvedDailyProblem(1L, member, problem);
+
+        given(dailyProblemReader.findDailyProblemsByMember(memberId)).willReturn(List.of(existingDailyProblem));
+        dailyProblemService.getTodayProblem(memberId);
+        assertThat(Objects.requireNonNull(cacheManager.getCache("todayProblem")).get(cacheKey)).isNotNull();
+
+        // when: generateInitialProblem afterCommit 에서 stale 캐시 무효화
+        cacheManager.getCache("todayProblem").evict(cacheKey);
+        assertThat(cacheManager.getCache("todayProblem").get(cacheKey)).isNull();
+
+        // DB에 신규 문제 추가됨
+        var newDailyProblem = DailyProblemFixture.createUnsolvedDailyProblem(2L, member, problem);
+        given(dailyProblemReader.findDailyProblemsByMember(memberId))
+                .willReturn(List.of(existingDailyProblem, newDailyProblem));
+
+        // when: 재조회
+        var result = dailyProblemService.getTodayProblem(memberId);
+
+        // then: stale 캐시(1개)가 아닌 fresh 데이터(2개) 반환
+        assertThat(result).hasSize(2);
+        // then: DB 재호출 (캐시 채우기 1번 + 무효화 후 재조회 1번)
+        verify(dailyProblemReader, times(2)).findDailyProblemsByMember(memberId);
+    }
+
+    // ──────────────────────────────────────────────────────────────
     // dailyProblemDetail 캐시
     // ──────────────────────────────────────────────────────────────
 
