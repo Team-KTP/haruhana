@@ -170,14 +170,18 @@ Authorization: Bearer {accessToken}
   "id": 1,
   "nickname": "하루하나",
   "profileImageUrl": "https://...",
-  "preference": {
-    "difficulty": "EASY",
-    "categoryTopicId": 3,
-    "categoryTopicName": "Spring",
-    "categoryGroupName": "백엔드",
-    "categoryName": "개발",
-    "effectiveAt": "2026-02-21"
-  }
+  "memberPreferences": [
+    {
+      "preferenceId": 1,
+      "categoryTopicName": "Spring",
+      "difficulty": "EASY"
+    },
+    {
+      "preferenceId": 2,
+      "categoryTopicName": "Java",
+      "difficulty": "MEDIUM"
+    }
+  ]
 }
 ```
 
@@ -204,10 +208,10 @@ Authorization: Bearer {accessToken}
 
 ---
 
-### 선호 설정 변경
+### 학습 설정 추가
 
 ```
-PATCH /v1/members/preferences
+POST /v1/members/preferences
 Authorization: Bearer {accessToken}
 ```
 
@@ -216,6 +220,27 @@ Authorization: Bearer {accessToken}
 {
   "categoryTopicId": 5,
   "difficulty": "MEDIUM"
+}
+```
+
+**Response**: 204 No Content
+
+> 최대 5개까지 추가 가능. 동일한 카테고리 토픽 + 난이도 조합 중복 불가.
+
+---
+
+### 학습 설정 수정
+
+```
+PATCH /v1/members/preferences/{preferenceId}
+Authorization: Bearer {accessToken}
+```
+
+**Request Body**
+```json
+{
+  "categoryTopicId": 5,
+  "difficulty": "HARD"
 }
 ```
 
@@ -233,6 +258,8 @@ Authorization: Bearer {accessToken}
 ```
 
 **Response**: 200 OK (data: null)
+
+> 탈퇴 시 loginId와 nickname은 즉시 익명화됨.
 
 ---
 
